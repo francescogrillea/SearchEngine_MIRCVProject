@@ -40,7 +40,7 @@ public class MainClass {
             int doc_id = 0;
             BufferedReader br = new BufferedReader(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));;
             String line;
-            while((line = br.readLine()) != null && doc_id < 1){
+            while((line = br.readLine()) != null && doc_id < 5){
                 process_document(doc_id, line);
                 doc_id++;
             }

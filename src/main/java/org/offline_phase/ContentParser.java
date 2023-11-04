@@ -22,6 +22,11 @@ public class ContentParser {
         try (BufferedReader reader = new BufferedReader(new FileReader(stopword_filepath))) {
             String line;
             while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) {
+                    // Skip empty lines
+                    continue;
+                }
+
                 this.stopwords.add(line);
             }
         } catch (IOException e) {
@@ -35,6 +40,13 @@ public class ContentParser {
         List<String> s2 = new ArrayList<String>(Arrays.asList(s1));
         List<String> s3 = stemming(removeStopWords(s2));
         s3.replaceAll(String::toLowerCase);
+
+        for (int i=0;i<s3.size();i++) {
+            s3.set(i, removeSpecialCharacters(s3.get(i)));
+            if (s3.get(i).isEmpty())
+                s3.remove(i);
+        }
+
         return s3;
     }
 
@@ -58,6 +70,12 @@ public class ContentParser {
             stemmedList.add(stemmedWord);
         }
         return stemmedList;
+    }
+
+
+
+    private static String removeSpecialCharacters(String line) {
+        return line.replaceAll("[^a-zA-Z0-9]", "");
     }
 
 }
