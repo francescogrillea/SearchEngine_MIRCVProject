@@ -37,37 +37,14 @@ public class MainClass {
 
             tarArchiveInputStream.getNextTarEntry();
 
-            int doc_id = 0;
-            BufferedReader br = new BufferedReader(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));;
-            String line;
-            while((line = br.readLine()) != null && doc_id < 5){
-                process_document(doc_id, line);
-                doc_id++;
-            }
-            br.close();
+            Spimi spimi = new Spimi(tarArchiveInputStream);
+            spimi.merge_chunks();
+
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
-
-    private static void process_document(int doc_id, String line) {
-
-        String[] fields = line.split("\t");
-
-        // TODO - valuatre se è meglio mettere sta cosa nel main passandogli la coppia <pid, text>
-        ContentParser parser = new ContentParser("data/stop_words_english.txt");
-        List<String> terms = parser.processContent(fields[1]);
-        terms.forEach(System.out::println);
-
-        // add document to the document_index
-        int pid = Integer.parseInt(fields[0]);
-        long length = fields[1].length();
-        document_index.put(doc_id, new DocInfo(pid, length));
-
-
-    }
-
 
 }
