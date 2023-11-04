@@ -33,7 +33,9 @@ public class ContentParser {
         String s = removePunctuation(content);
         String[] s1 = s.split(" ");
         List<String> s2 = new ArrayList<String>(Arrays.asList(s1));
-        return stemming(removeStopWords(s2));
+        List<String> s3 = stemming(removeStopWords(s2));
+        s3.replaceAll(String::toLowerCase);
+        return s3;
     }
 
     public String removePunctuation(String content){
