@@ -18,8 +18,8 @@ public class Spimi {
     // private final int memory_size = 10000;
     private int doc_id_counter = 0;
     private int block_id_counter = 0;
-    private final int  CHUNK_SIZE = 3072;
-    private final int __DEBUG_TEST = 5;    // n of blocks we want to analyze
+    private final int  CHUNK_SIZE = 1;
+    private final int __DEBUG_TEST = 2;    // n of blocks we want to analyze
 
     private final String intermediate_posting_path = "data/intermediate_postings/";
 
@@ -47,6 +47,7 @@ public class Spimi {
                     }
                     doc_id_counter += 1;
                 }// end of chunk
+                System.out.println(intermediateIndex);
 
                 // write intermediate index structure to a file
                 String filename = this.intermediate_posting_path + "block_" + block_id_counter + ".ser";
@@ -120,13 +121,12 @@ public class Spimi {
     public void generate_final_structures(IntermediatePostings merged_postings){
 
         HashMap<String, LexiconInfo> lexicon = new HashMap<String, LexiconInfo>();
-        PostingList inverted_index = new PostingList();
-        int offset = 0;
-        int length;
+        ArrayList<PostingList> inverted_index = new ArrayList<>();
+
         for(int i = 0; i < merged_postings.size(); i++){
-            length = inverted_index.concatenatePostings(merged_postings.getPostingLists().get(i));
-            lexicon.put(merged_postings.getTerms().get(i), new LexiconInfo(offset, length-1));
-            offset += length;
+            inverted_index.add(merged_postings.getPostingLists().get(i));
+            inverted_index.get(i).generate_skipping_points();
+            lexicon.put(merged_postings.getTerms().get(i), new LexiconInfo(i, merged_postings.getPostingLists().get(i).size()));
         }
 
         logger.info("" + lexicon);

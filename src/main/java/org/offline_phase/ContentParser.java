@@ -38,16 +38,11 @@ public class ContentParser {
         String s = removePunctuation(content);
         String[] s1 = s.split(" ");
         List<String> s2 = new ArrayList<String>(Arrays.asList(s1));
-        List<String> s3 = stemming(removeStopWords(s2));
-        s3.replaceAll(String::toLowerCase);
+        s2.replaceAll(String::toLowerCase);
+        s2.replaceAll(ContentParser::removeSpecialCharacters);
+        s2.removeIf(String::isEmpty);
 
-        for (int i=0;i<s3.size();i++) {
-            s3.set(i, removeSpecialCharacters(s3.get(i)));
-            if (s3.get(i).isEmpty())
-                s3.remove(i);
-        }
-
-        return s3;
+        return stemming(removeStopWords(s2));
     }
 
     public String removePunctuation(String content){
@@ -71,7 +66,6 @@ public class ContentParser {
         }
         return stemmedList;
     }
-
 
 
     private static String removeSpecialCharacters(String line) {

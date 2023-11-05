@@ -41,8 +41,8 @@ public class MainClass {
             Spimi spimi = new Spimi(tarArchiveInputStream);
             spimi.merge_chunks();
 
-            long executionTime = System.currentTimeMillis() - startTime;
-            System.out.println("Execution time: " + executionTime/1000.0 + "s");
+            double executionTime = (System.currentTimeMillis() - startTime)/1000.0;
+            System.out.println("Offline Phase ended in: " + executionTime + "s");
 
         } catch (IOException e) {
             e.printStackTrace();

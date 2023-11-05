@@ -1,16 +1,16 @@
 package org.common;
 
-public class LexiconInfo {
+import java.io.Serializable;
+
+public class LexiconInfo implements Serializable {
 
     private int offset;
-    private int length;     // N
     private int document_frequency; // how many documents contains the term
     private int collection_frequency;   // TODO - useless?
 
-    public LexiconInfo(int offset, int length) {
+    public LexiconInfo(int offset, int df) {
         this.offset = offset;
-        this.length = length;
-        this.document_frequency = length;
+        this.document_frequency = df;
     }
 
     public void increaseDF(){
@@ -23,7 +23,6 @@ public class LexiconInfo {
 
     @Override
     public String toString() {
-        return "{from=" + offset +
-                ", to=" + length + "}";
+        return "{from=" + offset + "}";
     }
 }

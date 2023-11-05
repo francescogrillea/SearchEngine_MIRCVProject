@@ -7,17 +7,24 @@ import java.util.List;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
+import static java.lang.Math.ceil;
+import static java.lang.Math.sqrt;
+
 public class PostingList implements Iterable, Serializable {
 
     private List<Posting> postingList;
-    // private List<Integer> skipping_pointers;
+    private List<Integer> skipping_pointers;
+
+    private int block_size;
 
     public PostingList() {
         this.postingList = new ArrayList<Posting>();
+        this.skipping_pointers = new ArrayList<>();
     }
 
     public PostingList(int doc_id) {
         this.postingList = new ArrayList<Posting>();
+        this.skipping_pointers = new ArrayList<>();
         this.postingList.add(new Posting(doc_id));
     }
 
@@ -42,6 +49,19 @@ public class PostingList implements Iterable, Serializable {
         this.postingList.addAll(new_postings.getPostingList());
         return new_postings.size();
     }
+
+    public void compute_block_size(){
+        this.block_size = (int) ceil(sqrt(size()));
+    }
+    public void generate_skipping_points(){
+        compute_block_size();
+
+        for(int i = 0; i < this.size()/this.block_size; i++){
+            int max_doc_id = this.postingList.get(((i + 1) * this.block_size) - 1).getDoc_id();
+            this.skipping_pointers.add(max_doc_id);
+        }
+    }
+
 
 
     public int size(){
@@ -70,6 +90,6 @@ public class PostingList implements Iterable, Serializable {
 
     @Override
     public String toString() {
-        return "" + postingList;
+        return "" + postingList + "\t Skipping Points: " + skipping_pointers;
     }
 }
