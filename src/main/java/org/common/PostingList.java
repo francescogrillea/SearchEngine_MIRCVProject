@@ -10,6 +10,11 @@ import java.util.function.Consumer;
 public class PostingList implements Iterable, Serializable {
 
     private List<Posting> postingList;
+    // private List<Integer> skipping_pointers;
+
+    public PostingList() {
+        this.postingList = new ArrayList<Posting>();
+    }
 
     public PostingList(int doc_id) {
         this.postingList = new ArrayList<Posting>();
@@ -28,9 +33,16 @@ public class PostingList implements Iterable, Serializable {
             postingList.get(index).increaseTF();
     }
 
+    // TODO - da togliere
     public void concatenatePostings(List<Posting> new_postings){
         this.postingList.addAll(new_postings);
     }
+
+    public int concatenatePostings(PostingList new_postings){
+        this.postingList.addAll(new_postings.getPostingList());
+        return new_postings.size();
+    }
+
 
     public int size(){
         return this.postingList.size();

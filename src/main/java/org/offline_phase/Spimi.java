@@ -1,9 +1,15 @@
 package org.offline_phase;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.common.LexiconInfo;
+import org.common.Posting;
+import org.common.PostingList;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -12,8 +18,8 @@ public class Spimi {
     // private final int memory_size = 10000;
     private int doc_id_counter = 0;
     private int block_id_counter = 0;
-    private final int  CHUNK_SIZE = 1;
-    private final int __DEBUG_TEST = 2;
+    private final int  CHUNK_SIZE = 3072;
+    private final int __DEBUG_TEST = 5;    // n of blocks we want to analyze
 
     private final String intermediate_posting_path = "data/intermediate_postings/";
 
@@ -91,7 +97,6 @@ public class Spimi {
 
     public void merge_chunks(){
 
-
         IntermediatePostings merged_postings = new IntermediatePostings();
 
         File directory = new File(this.intermediate_posting_path);
@@ -104,9 +109,33 @@ public class Spimi {
                 current_block = chunk_from_disk(file.getPath());
                 merged_postings.merge(current_block);
 
+                //file.delete();
             }
             logger.info("" + merged_postings);
         }
+
+        generate_final_structures(merged_postings);
+    }
+
+    public void generate_final_structures(IntermediatePostings merged_postings){
+
+        HashMap<String, LexiconInfo> lexicon = new HashMap<String, LexiconInfo>();
+        PostingList inverted_index = new PostingList();
+        int offset = 0;
+        int length;
+        for(int i = 0; i < merged_postings.size(); i++){
+            length = inverted_index.concatenatePostings(merged_postings.getPostingLists().get(i));
+            lexicon.put(merged_postings.getTerms().get(i), new LexiconInfo(offset, length-1));
+            offset += length;
+        }
+
+        logger.info("" + lexicon);
+        logger.info("" + inverted_index);
+
+        // TODO - convert to byte arrays to efficient storing?
+
+        chunk_to_disk(lexicon, "data/lexicon.ser");
+        chunk_to_disk(inverted_index, "data/inverted_index.ser");
     }
 
 }

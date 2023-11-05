@@ -21,7 +21,7 @@ public class IntermediatePostings implements Serializable {
         int i = 0;
         int result;
         for(String t : terms){
-             result = term.compareTo(t);
+            result = term.compareTo(t);
 
             // to handle sorted insertion
             if (result < 0)
@@ -38,7 +38,7 @@ public class IntermediatePostings implements Serializable {
         postingLists.add(i, new PostingList(doc_id));
     }
 
-    public void addPostings(String term, PostingList intermediate_posting){
+    public void addPostingList(String term, PostingList intermediate_posting){
         int i = 0;
         int result;
         for(String t : terms){
@@ -60,14 +60,48 @@ public class IntermediatePostings implements Serializable {
     }
 
 
+//    // TODO guardare le previouse push su git
+//    public void addPosting(String term, int doc_id){
+//
+//        int result = 1;
+//        int i = 0;
+//        for(i = 0; i < this.terms.size() && result > 0 ; i++){
+//            result = term.compareTo(this.terms.get(i));
+//        }
+//
+//        if(result == 0)
+//            this.postingLists.get(i).addPosting(doc_id);
+//        else{
+//            this.terms.add(i, term);
+//            this.postingLists.add(i, new PostingList(doc_id));
+//        }
+//    }
+//
+//    public void addPostingList(String term, PostingList intermediate_posting){
+//
+//        int result = 1;
+//        int i = 0;
+//        for(i = 0; i < this.terms.size() && result > 0 ; i++){
+//            result = term.compareTo(this.terms.get(i));
+//        }
+//
+//        if(result == 0)
+//            postingLists.get(i).concatenatePostings(intermediate_posting.getPostingList());
+//        else{
+//            this.terms.add(i, term);
+//            this.postingLists.add(i, intermediate_posting);
+//        }
+//    }
+//
+
     public void merge(IntermediatePostings intermediate_posting){
 
         for(int i = 0; i < intermediate_posting.size(); i++){
-            addPostings(intermediate_posting.terms.get(i), intermediate_posting.getPostingLists().get(i));
+            addPostingList(intermediate_posting.terms.get(i), intermediate_posting.getPostingLists().get(i));
         }
     }
 
-    private int size() {
+    public int size() {
         return this.terms.size();
     }
 

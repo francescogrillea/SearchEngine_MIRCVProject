@@ -36,10 +36,13 @@ public class MainClass {
              TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipCompressorInputStream)) {
 
             tarArchiveInputStream.getNextTarEntry();
+            long startTime = System.currentTimeMillis();
 
             Spimi spimi = new Spimi(tarArchiveInputStream);
             spimi.merge_chunks();
 
+            long executionTime = System.currentTimeMillis() - startTime;
+            System.out.println("Execution time: " + executionTime/1000.0 + "s");
 
         } catch (IOException e) {
             e.printStackTrace();
