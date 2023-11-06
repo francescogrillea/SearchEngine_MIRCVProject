@@ -14,18 +14,21 @@ public class PostingList implements Iterable, Serializable {
 
     private List<Posting> postingList;
     private List<Integer> skipping_pointers;
+    private short size;
 
     private int block_size;
 
     public PostingList() {
         this.postingList = new ArrayList<Posting>();
         this.skipping_pointers = new ArrayList<>();
+        this.size = 0;
     }
 
     public PostingList(int doc_id) {
         this.postingList = new ArrayList<Posting>();
         this.skipping_pointers = new ArrayList<>();
         this.postingList.add(new Posting(doc_id));
+        this.size = 1;
     }
 
     public void addPosting(int doc_id){
@@ -33,39 +36,37 @@ public class PostingList implements Iterable, Serializable {
         // if yes, just increase; if not, initialize new posting
 
         int index = postingList.indexOf(new Posting(doc_id));
-        //int index = postingList.indexOf(doc_id); // TODO - check se funziona anche cosi'
-        if (index == -1)
+        if (index == -1){
             postingList.add(new Posting(doc_id));
+            this.size++;
+        }
         else
             postingList.get(index).increaseTF();
-    }
 
-    // TODO - da togliere
-    public void concatenatePostings(List<Posting> new_postings){
-        this.postingList.addAll(new_postings);
     }
 
     public int concatenatePostings(PostingList new_postings){
         this.postingList.addAll(new_postings.getPostingList());
-        return new_postings.size();
+        this.size += new_postings.getSize();
+        return new_postings.getSize();
     }
 
     public void compute_block_size(){
-        this.block_size = (int) ceil(sqrt(size()));
+        this.block_size = (int) ceil(sqrt(size));
     }
     public void generate_skipping_points(){
+
         compute_block_size();
 
-        for(int i = 0; i < this.size()/this.block_size; i++){
+        for(int i = 0; i < this.getSize() / this.block_size; i++){
             int max_doc_id = this.postingList.get(((i + 1) * this.block_size) - 1).getDoc_id();
             this.skipping_pointers.add(max_doc_id);
         }
     }
 
 
-
-    public int size(){
-        return this.postingList.size();
+    public int getSize(){
+        return this.size;
     }
 
     @Override

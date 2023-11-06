@@ -10,10 +10,12 @@ public class IntermediatePostings implements Serializable {
 
     private List<String> terms;
     private List<PostingList> postingLists;
+    private short size;
 
     public IntermediatePostings() {
         terms = new ArrayList<>();
         postingLists = new ArrayList<>();
+        this.size = 0;
     }
 
 
@@ -36,6 +38,7 @@ public class IntermediatePostings implements Serializable {
         }
         terms.add(i, term);
         postingLists.add(i, new PostingList(doc_id));
+        ++this.size;
     }
 
     public void addPostingList(String term, PostingList intermediate_posting){
@@ -50,13 +53,14 @@ public class IntermediatePostings implements Serializable {
 
             // if term already in intermediate posting, update its posting list
             if (result == 0){
-                postingLists.get(i).concatenatePostings(intermediate_posting.getPostingList());
+                postingLists.get(i).concatenatePostings(intermediate_posting);
                 return;
             }
             i++;
         }
         terms.add(i, term);
         postingLists.add(i, intermediate_posting);
+        ++this.size;
     }
 
 
@@ -65,18 +69,19 @@ public class IntermediatePostings implements Serializable {
     public void merge(IntermediatePostings intermediate_posting){
 
         for(int i = 0; i < intermediate_posting.size(); i++){
-            addPostingList(intermediate_posting.terms.get(i), intermediate_posting.getPostingLists().get(i));
+            addPostingList(intermediate_posting.getTerms().get(i), intermediate_posting.getPostingLists().get(i));
         }
     }
 
     public int size() {
-        return this.terms.size();
+        return this.size;
     }
 
 
     public void clear(){
         this.terms.clear();
         this.postingLists.clear();
+        this.size = 0;
     }
 
 
@@ -99,7 +104,7 @@ public class IntermediatePostings implements Serializable {
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
-        for(int i = 0; i < this.size(); i++){
+        for(int i = 0; i < this.size; i++){
             out.append(this.terms.get(i)).append(": \t");
             out.append(this.postingLists.get(i)).append("\n");
         }

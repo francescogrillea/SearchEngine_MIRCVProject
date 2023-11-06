@@ -6,7 +6,7 @@ import java.util.Objects;
 public class Posting implements Comparable<Integer>, Serializable {
 
     private int doc_id;
-    private int term_frequency = 0;
+    private short term_frequency = 0;
 
     public Posting(int doc_id) {
         this.doc_id = doc_id;
@@ -25,7 +25,7 @@ public class Posting implements Comparable<Integer>, Serializable {
         return term_frequency;
     }
 
-    public void setTerm_frequency(int term_frequency) {
+    public void setTerm_frequency(short term_frequency) {
         this.term_frequency = term_frequency;
     }
 
