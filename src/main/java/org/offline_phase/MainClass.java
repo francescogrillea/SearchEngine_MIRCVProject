@@ -39,7 +39,6 @@ public class MainClass {
             long startTime = System.currentTimeMillis();
 
             Spimi spimi = new Spimi(tarArchiveInputStream);
-            spimi.merge_chunks();
 
             double executionTime = (System.currentTimeMillis() - startTime)/1000.0;
             System.out.println("Offline Phase ended in: " + executionTime + "s");

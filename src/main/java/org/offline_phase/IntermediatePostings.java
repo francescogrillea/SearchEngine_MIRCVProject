@@ -105,6 +105,7 @@ public class IntermediatePostings implements Serializable {
     public String toString() {
         StringBuilder out = new StringBuilder();
         for(int i = 0; i < this.size; i++){
+            out.append("\t");
             out.append(this.terms.get(i)).append(": \t");
             out.append(this.postingLists.get(i)).append("\n");
         }
