@@ -5,8 +5,11 @@ import java.util.Objects;
 
 public class Posting implements Comparable<Integer>, Serializable {
 
+    private static final long serialVersionUID = 123L;
     private int doc_id;
     private short term_frequency = 0;
+
+    public static final int SIZE = (Integer.SIZE + Short.SIZE) / 8;
 
     public Posting(int doc_id) {
         this.doc_id = doc_id;
