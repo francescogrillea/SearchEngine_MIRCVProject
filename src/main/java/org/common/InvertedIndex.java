@@ -27,7 +27,7 @@ public class InvertedIndex implements InvertedIndexInterface {
 
 
     public void addPostingList(int index, PostingList postingList){
-        return;
+        this.inverted_index.add(index, postingList);
     }
 
     public void appendPostingList(int index, PostingList postingList){

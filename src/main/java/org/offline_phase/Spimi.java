@@ -39,29 +39,45 @@ public class Spimi extends ChunkHandler {
             throw new RuntimeException(e);
         }
         // TODO - shall we wait the threads to finish ? -> Implement a threadpool ?
-        merge_chunks();
+//        merge_chunks();
     }
 
     public void merge_chunks(){
 
         InvertedIndex merged_index = new InvertedIndex();
         Lexicon merged_lexicon = new Lexicon();
+        Lexicon current_lexicon;
 
         File lexicon_directory = new File("data/intermediate_postings/lexicon");
         File index_directory = new File("data/intermediate_postings/index");
 
         File[] lexicon_files = lexicon_directory.listFiles();
         File[] index_files = index_directory.listFiles();
+        File current_lexicon_filename;
+        File current_index_filename;
 
         // TODO - assert size of both directories be the same
 
         int n = lexicon_files.length;
+        for(int i = 0; i < n; i++){
+            current_lexicon_filename = lexicon_files[i];
+            current_index_filename = index_files[i];
+            current_lexicon = readLexicon(current_lexicon_filename.getPath());
 
-        merged_lexicon = readLexicon("data/intermediate_postings/lexicon/block_lexicon_00000.ser");
+            for(TermEntry term : current_lexicon.getLexicon()){
+                int index = merged_lexicon.indexOf(term.getTerm());
+                // if term is not in merged_lexicon
+                if(index < 0){
+                    index = merged_lexicon.addTerm(term);
+                    merged_index.addPostingList(index, readPostingList(current_index_filename.getPath(), term));
+                }
+                else{
+                    merged_index.appendPostingList(index, readPostingList(current_index_filename.getPath(), term));
+                }
+            }
+        }
         System.out.println(merged_lexicon);
-
-
+        System.out.println(merged_index);
+        write(merged_index, merged_lexicon, "data/index.ser", "data/lexicon.ser");
     }
-
-
 }

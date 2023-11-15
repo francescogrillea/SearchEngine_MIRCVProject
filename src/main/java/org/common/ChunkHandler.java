@@ -13,8 +13,8 @@ import java.util.logging.Logger;
 public class ChunkHandler {
 
     protected final String basename = "data/intermediate_postings/";
-    protected final int  CHUNK_SIZE = 5;     // in MB or just n-docs
-    protected final int _DEBUG_N_DOCS = 15;    // n of documents we want to analyze
+    protected final int  CHUNK_SIZE = 1024;     // in MB or just n-docs
+    protected final int _DEBUG_N_DOCS = 1024 * 12;    // n of documents we want to analyze
     static Logger logger = Logger.getLogger(Spimi.class.getName());
 
 
@@ -37,7 +37,7 @@ public class ChunkHandler {
                 startPosition = indexFileChannel.position();
 
                 // store posting list of the i-th term to disk
-                ByteBuffer index_buffer = ByteBuffer.allocate(1024);
+                ByteBuffer index_buffer = ByteBuffer.allocate(10240);
                 byte[] index_bytes = SerializationUtils.serialize(postingList);
 
                 index_buffer.put(index_bytes);
@@ -80,8 +80,8 @@ public class ChunkHandler {
         return lexicon;
     }
 
-    public void readIndex(String filename){
-
+    public InvertedIndex readIndex(String filename){
+        return null;
     }
 
     public PostingList readPostingList(String index_filename, TermEntry termEntry){
@@ -96,9 +96,7 @@ public class ChunkHandler {
             indexByteBuffer.flip();
 
             byte[] indexBytes = indexByteBuffer.array();
-            PostingList postingList = SerializationUtils.deserialize(indexBytes);
-            System.out.println(postingList);
-            return postingList;
+            return SerializationUtils.deserialize(indexBytes);
         } catch (IOException e) {
             e.printStackTrace();
         }
