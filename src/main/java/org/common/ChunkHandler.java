@@ -23,7 +23,7 @@ public class ChunkHandler {
         try (FileOutputStream indexFileOutputStream = new FileOutputStream(index_filename, true);
              FileChannel indexFileChannel = indexFileOutputStream.getChannel();
              FileOutputStream lexiconFileOutputStream = new FileOutputStream(lexicon_filename, true);
-             FileChannel lexiconFileChannel = lexiconFileOutputStream.getChannel()) {
+             ObjectOutputStream lexiconOutputStream = new ObjectOutputStream(lexiconFileOutputStream)) {
 
             // to save the starting position
             long startPosition;
@@ -49,14 +49,7 @@ public class ChunkHandler {
                 // update the fields of the i-th term in the vocabulary
                 termEntry.setOffset(startPosition);
                 termEntry.setLength(length);
-
-                // store the i-th term to disk
-                ByteBuffer lexicon_buffer = ByteBuffer.allocate(512);
-                byte[] lexicon_bytes = SerializationUtils.serialize(termEntry);
-
-                lexicon_buffer.put(lexicon_bytes);
-                lexicon_buffer.flip();
-                lexiconFileChannel.write(lexicon_buffer);
+                lexiconOutputStream.writeObject(termEntry);
             }
 
         } catch (IOException e) {
@@ -66,25 +59,35 @@ public class ChunkHandler {
     }
 
 
-    protected void read(String lexicon_filename, String index_filename){
+    protected Lexicon readLexicon(String lexicon_filename){
+
+        Lexicon lexicon = new Lexicon();
 
         try (FileInputStream lexiconFileInputStream = new FileInputStream(lexicon_filename);
-             FileChannel lexiconFileChannel = lexiconFileInputStream.getChannel();
-             FileInputStream indexFileInputStream = new FileInputStream(index_filename);
+             ObjectInputStream lexiconInputStream = new ObjectInputStream(lexiconFileInputStream)) {
+
+            TermEntry termEntry;
+            while((termEntry = (TermEntry) lexiconInputStream.readObject()) != null) {
+                lexicon.addTerm(termEntry);
+            }
+
+        } catch (IOException ignored) {
+
+        } catch (ClassNotFoundException e){
+            e.printStackTrace();
+        }
+        logger.info("Block has been read from disk");
+        return lexicon;
+    }
+
+    public void readIndex(String filename){
+
+    }
+
+    public PostingList readPostingList(String index_filename, TermEntry termEntry){
+
+        try (FileInputStream indexFileInputStream = new FileInputStream(index_filename);
              FileChannel indexFileChannel = indexFileInputStream.getChannel()) {
-
-            // TODO - for each term in terms
-
-            // Read bytes into ByteBuffer
-            ByteBuffer lexiconByteBuffer = ByteBuffer.allocate(512);
-            int lexiconBytesRead = lexiconFileChannel.read(lexiconByteBuffer);
-            lexiconByteBuffer.flip();
-
-            byte[] lexiconBytes = lexiconByteBuffer.array();
-            TermEntry termEntry = SerializationUtils.deserialize(lexiconBytes);
-            System.out.println(termEntry);
-
-
 
             // Read bytes into ByteBuffer
             ByteBuffer indexByteBuffer = ByteBuffer.allocate((int) termEntry.getLength());
@@ -95,16 +98,11 @@ public class ChunkHandler {
             byte[] indexBytes = indexByteBuffer.array();
             PostingList postingList = SerializationUtils.deserialize(indexBytes);
             System.out.println(postingList);
-
-
-            // TODO - end for
-
-
-
+            return postingList;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info("Block has been read from disk");
+        return null;
     }
 
 

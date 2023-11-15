@@ -43,8 +43,24 @@ public class Spimi extends ChunkHandler {
     }
 
     public void merge_chunks(){
-        read("data/intermediate_postings/block_lexicon_00000.ser",
-                "data/intermediate_postings/block_index_00000.ser");
+
+        InvertedIndex merged_index = new InvertedIndex();
+        Lexicon merged_lexicon = new Lexicon();
+
+        File lexicon_directory = new File("data/intermediate_postings/lexicon");
+        File index_directory = new File("data/intermediate_postings/index");
+
+        File[] lexicon_files = lexicon_directory.listFiles();
+        File[] index_files = index_directory.listFiles();
+
+        // TODO - assert size of both directories be the same
+
+        int n = lexicon_files.length;
+
+        merged_lexicon = readLexicon("data/intermediate_postings/lexicon/block_lexicon_00000.ser");
+        System.out.println(merged_lexicon);
+
+
     }
 
 

@@ -26,6 +26,17 @@ public class Lexicon implements LexiconInterface{
         return i;
     }
 
+    public int addTerm(TermEntry termEntry){
+        if(lexicon.size() == 0){
+            lexicon.add(termEntry);
+            return 0;
+        }
+
+        int i = indexOfNext(termEntry.getTerm());
+        this.lexicon.add(i, termEntry);
+        return i;
+    }
+
     @Override
     public int indexOf(String s){
 

@@ -11,6 +11,7 @@ public class TermEntry implements Serializable {
     private long length;
     private int document_frequency;
 
+
     public TermEntry(String term) {
         this.term = term;
         this.document_frequency = 0;
