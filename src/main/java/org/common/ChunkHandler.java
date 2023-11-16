@@ -37,10 +37,11 @@ public class ChunkHandler {
                 startPosition = indexFileChannel.position();
 
                 // store posting list of the i-th term to disk
-                ByteBuffer index_buffer = ByteBuffer.allocate(10240);
                 byte[] index_bytes = SerializationUtils.serialize(postingList);
+                // ByteBuffer index_buffer = ByteBuffer.allocate(10240);
+                // index_buffer.put(index_bytes);
+                ByteBuffer index_buffer = ByteBuffer.wrap(index_bytes);
 
-                index_buffer.put(index_bytes);
                 index_buffer.flip();
                 indexFileChannel.write(index_buffer);
 
