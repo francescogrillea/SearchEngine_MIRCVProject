@@ -8,7 +8,6 @@ import java.util.List;
 
 public class InvertedIndex implements InvertedIndexInterface {
 
-    // TODO e' necessario il serializable -> serialVersionUID
     private List<PostingList> inverted_index;
 
     public InvertedIndex() {
@@ -17,7 +16,10 @@ public class InvertedIndex implements InvertedIndexInterface {
 
     @Override
     public void addPosting(int index, Posting posting){
-        this.inverted_index.add(index, new PostingList(posting));
+        if(index < this.inverted_index.size())
+            this.inverted_index.get(index).addPosting(posting);
+        else
+            this.inverted_index.add(index, new PostingList(posting));
     }
 
     @Override

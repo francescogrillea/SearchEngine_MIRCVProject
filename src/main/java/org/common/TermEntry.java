@@ -3,38 +3,16 @@ package org.common;
 import java.io.Serializable;
 
 public class TermEntry implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    private final String term;
+    private int block_index;
     private long offset;
     private long length;
     private int document_frequency;
 
-
-    public TermEntry(String term) {
-        this.term = term;
-        this.document_frequency = 0;
-    }
-
-    public void increaseDF(){
-        this.document_frequency++;
-    }
-
-    public void setOffset(long offset) {
+    public TermEntry(int block_index, long offset, long length) {
+        this.block_index = block_index;
         this.offset = offset;
-    }
-
-    public void setLength(long length) {
         this.length = length;
-    }
-
-    public void setDocument_frequency(int document_frequency) {
-        this.document_frequency = document_frequency;
-    }
-
-    public String getTerm() {
-        return term;
+        this.document_frequency = 0;
     }
 
     public long getOffset() {
@@ -52,9 +30,9 @@ public class TermEntry implements Serializable {
     @Override
     public String toString() {
         return "TermEntry{" +
-                "term='" + term + '\'' +
                 ", offset=" + offset +
                 ", length=" + length +
+                ", document_frequency=" + document_frequency +
                 '}';
     }
 }

@@ -31,25 +31,17 @@ public class ProcessChunkThread extends ChunkHandler implements Runnable{
             String[] fields = documents[i].split("\t");
             if (! fields[1].isEmpty()){
                 List<String> terms = parser.processContent(fields[1]);
-
+                int index;
                 for(String term : terms){
-                    int index = intermediateLexicon.indexOf(term);
-                    if(index < 0){
-                        index = intermediateLexicon.addTerm(term);
-                        intermediateIndex.addPosting(index, new Posting(doc_id_counter));
-                    }
-                    else
-                        intermediateIndex.appendPosting(index, new Posting(doc_id_counter));
+                    index = intermediateLexicon.add(term);
+                    intermediateIndex.addPosting(index, new Posting(doc_id_counter));
                 }
             }
         }
-        System.out.println("Block " + block_index);
-        System.out.println(intermediateLexicon);
-        System.out.println(intermediateIndex);
-        String index_filename = String.format(super.basename + "index/block_index_%05d.ser", this.block_index);
-        String lexicon_filename = String.format(super.basename + "lexicon/block_lexicon_%05d.ser", this.block_index);
-
-        write(intermediateIndex, intermediateLexicon, index_filename, lexicon_filename);
+        System.out.println("Last block written: " + block_index);
+//        System.out.println(intermediateLexicon);
+//        System.out.println(intermediateIndex);
+        write(intermediateIndex, intermediateLexicon, this.block_index);
     }
 
 }

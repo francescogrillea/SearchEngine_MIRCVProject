@@ -1,35 +1,39 @@
 package org.common;
 
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class Posting implements Comparable<Integer>, Serializable {
+public class Posting implements Comparable<Integer> {
 
-    private static final long serialVersionUID = 123L;
     private int doc_id;
-    private short term_frequency = 0;
-
-    public static final int SIZE = (Integer.SIZE + Short.SIZE) / 8;
+    private byte term_frequency = 0;
 
     public Posting(int doc_id) {
         this.doc_id = doc_id;
         this.term_frequency += 1;
     }
 
+    public Posting(int doc_id, byte term_frequency){
+        this.doc_id = doc_id;
+        this.term_frequency = term_frequency;
+    }
+
+    public ByteBuffer serialize(EncoderInterface encoder){
+
+        byte[] encoded = encoder.encode(this.doc_id);
+        ByteBuffer byteBuffer = ByteBuffer.allocate((Byte.SIZE + (Byte.SIZE * encoded.length)) / 8);
+
+        byteBuffer.put(term_frequency);
+        byteBuffer.put(encoded);
+
+        byteBuffer.flip();
+
+        return byteBuffer;
+    }
+
     public int getDoc_id() {
         return doc_id;
-    }
-
-    public void setDoc_id(int doc_id) {
-        this.doc_id = doc_id;
-    }
-
-    public int getTerm_frequency() {
-        return term_frequency;
-    }
-
-    public void setTerm_frequency(short term_frequency) {
-        this.term_frequency = term_frequency;
     }
 
     @Override

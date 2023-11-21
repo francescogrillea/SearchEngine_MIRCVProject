@@ -1,99 +1,41 @@
 package org.common;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Serializable;
+import java.util.*;
 
-public class Lexicon implements LexiconInterface{
+public class Lexicon implements LexiconInterface, Serializable {
 
-    List<TermEntry> lexicon;
+    private HashMap<String, TermEntryList> lexicon;
+    private transient int size = 0;
 
     public Lexicon() {
-        this.lexicon = new ArrayList<TermEntry>();
-    }
-
-    public int addTerm(String s){
-
-        if(lexicon.size() == 0){
-            lexicon.add(new TermEntry(s));
-            return 0;
-        }
-
-        int i = indexOfNext(s);
-        this.lexicon.add(i, new TermEntry(s));
-        return i;
-    }
-
-    public int addTerm(TermEntry termEntry){
-        if(lexicon.size() == 0){
-            lexicon.add(termEntry);
-            return 0;
-        }
-
-        int i = indexOfNext(termEntry.getTerm());
-        this.lexicon.add(i, termEntry);
-        return i;
+        this.lexicon = new HashMap<>();
     }
 
     @Override
-    public int indexOf(String s){
+    public int add(String term){
 
-        int low = 0;
-        int high = lexicon.size() - 1;
-        int mid;
-        int comparison;
-
-        while (low <= high){
-            mid = low + (high - low) / 2;
-            comparison = s.compareTo(this.lexicon.get(mid).getTerm());
-
-            if (comparison == 0) {
-                return mid; // Query found
-            } else if (comparison < 0) {
-                high = mid - 1; // Query is in the lower half
-            } else {
-                low = mid + 1; // Query is in the upper half
-            }
+        TermEntryList termEntries = lexicon.get(term);
+        if(termEntries == null){
+            termEntries = new TermEntryList(this.size);
+            lexicon.put(term, termEntries);
+            this.size++;
         }
-
-        return -1;
+        return termEntries.getTerm_index();
     }
 
-    @Override
-    public int indexOfNext(String s) throws NullPointerException {
-
-        if(s == null || s.isEmpty())
-            throw new NullPointerException();
-
-        int low = 0;
-        int high = lexicon.size() - 1;
-        int mid;
-        int comparison;
-
-        while (low <= high) {
-            mid = low + (high - low) / 2;
-            comparison = s.compareTo(this.lexicon.get(mid).getTerm());
-
-            if (comparison == 0) {
-                return mid; // Query found
-            } else if (comparison < 0) {
-                high = mid - 1; // Query is in the lower half
-            } else {
-                low = mid + 1; // Query is in the upper half
-            }
-        }
-        return low;
+    public Set<String> keySet(){
+        return this.lexicon.keySet();
     }
 
-
-    public List<TermEntry> getLexicon() {
-        return lexicon;
+    public TermEntryList get(String term){
+        return this.lexicon.get(term);
     }
 
     @Override
     public String toString() {
-        return "Lexicon: " + lexicon;
+        return "Lexicon{" +
+                "lexicon=" + lexicon +
+                '}';
     }
 }
