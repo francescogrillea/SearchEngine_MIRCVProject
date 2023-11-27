@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class TermEntry implements Serializable {
     private int block_index;
     private long offset;
-    private long length;
+    private long length;    // TODO - change to integer to save space
     private int document_frequency;
 
     public TermEntry(int block_index, long offset, long length) {
@@ -13,6 +13,10 @@ public class TermEntry implements Serializable {
         this.offset = offset;
         this.length = length;
         this.document_frequency = 0;
+    }
+
+    public int getBlock_index() {
+        return block_index;
     }
 
     public long getOffset() {
@@ -30,6 +34,7 @@ public class TermEntry implements Serializable {
     @Override
     public String toString() {
         return "TermEntry{" +
+                "block_index=" + block_index +
                 ", offset=" + offset +
                 ", length=" + length +
                 ", document_frequency=" + document_frequency +

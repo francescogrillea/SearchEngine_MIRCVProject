@@ -1,5 +1,7 @@
-package org.common;
+package org.common.encoding;
 
+
+import org.common.encoding.EncoderInterface;
 
 import static java.lang.Math.log;
 

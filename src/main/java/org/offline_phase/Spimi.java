@@ -5,7 +5,9 @@ import org.common.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class Spimi extends ChunkHandler {
@@ -16,6 +18,7 @@ public class Spimi extends ChunkHandler {
 
     public void run(TarArchiveInputStream stream){
 
+        ExecutorService threadpool = Executors.newCachedThreadPool();
         try(BufferedReader br = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))){
 
             ContentParser parser = new ContentParser("data/stop_words_english.txt");
@@ -24,74 +27,88 @@ public class Spimi extends ChunkHandler {
                 StringBuilder chunk_text = new StringBuilder();
                 do{
                     line = br.readLine();
+
                     if ( line != null && !line.isEmpty()) {
                         chunk_text.append(line).append("\n");
                         doc_id_counter++;
                     }
                 }while(doc_id_counter < CHUNK_SIZE * (block_id_counter+1) && line != null && doc_id_counter < _DEBUG_N_DOCS);
 
-                new ProcessChunkThread(chunk_text, block_id_counter, parser).run();
+                threadpool.submit(new ProcessChunkThread(chunk_text, block_id_counter, parser));
                 block_id_counter++;
             }while (line != null && doc_id_counter < _DEBUG_N_DOCS);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        // TODO - shall we wait the threads to finish ? -> Implement a threadpool ?
-        //merge_chunks();
+
+        threadpool.shutdown();
+        while(!threadpool.isTerminated()) {
+            try {
+                threadpool.awaitTermination(100, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
     }
 
     public void merge_chunks(){
 
-//        InvertedIndex merged_index = new InvertedIndex();
-//        Lexicon merged_lexicon = new Lexicon();
-//
-//        merged_lexicon = readLexicon("data/intermediate_postings/lexicon/block_lexicon_00000.bin");
-//        System.out.println(merged_lexicon);
-//        System.out.println(merged_lexicon.get("current"));
+        Lexicon merged_lexicon = new Lexicon();
+        Lexicon current_lexicon;
 
-        PostingList postingList = readPostingList("data/intermediate_postings/index/block_index_00000.bin", new TermEntry(0, 626003, 433));
-        System.out.println(postingList);
-//        Lexicon current_lexicon;
-//        int posting_size = 0;
-//        int lexicon_size = 0;
-//
-//        File lexicon_directory = new File("data/intermediate_postings/lexicon");
-//        File index_directory = new File("data/intermediate_postings/index");
-//
-//        File[] lexicon_files = lexicon_directory.listFiles();
-//        File[] index_files = index_directory.listFiles();
-//
-//        String current_lexicon_filename;
-//        String current_index_filename;
-//        int n = lexicon_files.length;
-//
+        File lexicon_directory = new File("data/intermediate_postings/lexicon");
+        File index_directory = new File("data/intermediate_postings/index");
 
-//        for(int i = 0; i < n; i++){
-//            current_lexicon_filename = lexicon_files[i].getPath();
-//            current_index_filename = index_files[i].getPath();
-//            current_lexicon = readLexicon(current_lexicon_filename);
-//
-//            for(TermEntry term : current_lexicon.getLexicon()){
-//                lexicon_size++;
-//                posting_size += readPostingList(current_index_filename, term).getSize();
-//
-//                int index = merged_lexicon.indexOf(term.getTerm());
-//                // if term is not in merged_lexicon
-//                if(index < 0){
-//                    index = merged_lexicon.addTerm(term);
-//                    merged_index.addPostingList(index, readPostingList(current_index_filename, term));
-//                }
-//                else{
-//                    merged_index.appendPostingList(index, readPostingList(current_index_filename, term));
-//                }
-//            }
-//            break;
-//        }
-//        System.out.println(lexicon_size);
-//        System.out.println(posting_size);
-//        System.out.println(merged_lexicon);
-//        System.out.println(merged_index);
-//        write(merged_index, merged_lexicon, "data/index.ser", "data/lexicon.ser");
+        File[] lexicon_files = lexicon_directory.listFiles();
+
+        String current_lexicon_filename;
+
+        // TODO - we can use multithreading in merging lexicon
+        // merge all intermediate lexicon to create a unique one
+        for (File lexiconFile : lexicon_files) {
+            current_lexicon_filename = lexiconFile.getPath();
+            current_lexicon = readLexicon(current_lexicon_filename);
+            merged_lexicon.merge(current_lexicon);
+        }
+        logger.info("Intermediate Lexicons merged!");
+        System.out.println(merged_lexicon);
+
+
+        InvertedIndex merged_index = new InvertedIndex();
+        PostingList current_posting_list;
+
+        int i = 0;
+        for(String term : merged_lexicon.keySet()){
+
+            current_posting_list = new PostingList();
+            TermEntryList termEntryList = merged_lexicon.get(term);
+            termEntryList.setTerm_index(i);
+            for(TermEntry termEntry : termEntryList){
+                PostingList p = readPostingList(index_directory.getPath(), termEntry, true);
+                current_posting_list.appendPostings(p);
+            }
+            merged_index.addPostingList(current_posting_list);
+            i++;
+        }
+        logger.info("Intermediate Posting Lists merged");
+        System.out.println(merged_index);
+
+        write(merged_index, merged_lexicon, "data/index.bin", "data/lexicon.bin", false);
     }
+
+    public void debug_fun(){
+        Lexicon lexicon = readLexicon("data/lexicon.bin");
+
+        System.out.println(lexicon);
+//
+//        TermEntryList tel = lexicon.get("atom");
+//        System.out.println(tel);
+//        int n = tel.getTermEntryList().size();
+//
+//        PostingList postingList = readPostingList("data/", tel.getTermEntryList().get(n-1), false);
+//        System.out.println(postingList);
+    }
+
 }

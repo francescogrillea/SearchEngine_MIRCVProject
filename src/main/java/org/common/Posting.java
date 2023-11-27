@@ -1,6 +1,7 @@
 package org.common;
 
-import java.io.Serializable;
+import org.common.encoding.EncoderInterface;
+
 import java.nio.ByteBuffer;
 import java.util.Objects;
 

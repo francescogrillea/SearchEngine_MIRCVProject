@@ -28,6 +28,10 @@ public class InvertedIndex implements InvertedIndexInterface {
     }
 
 
+    public void addPostingList(PostingList postingList){
+        this.inverted_index.add(postingList);
+    }
+
     public void addPostingList(int index, PostingList postingList){
         this.inverted_index.add(index, postingList);
     }

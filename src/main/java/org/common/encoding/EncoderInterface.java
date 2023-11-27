@@ -1,4 +1,4 @@
-package org.common;
+package org.common.encoding;
 
 public interface EncoderInterface {
 

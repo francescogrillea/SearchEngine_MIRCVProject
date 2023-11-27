@@ -26,7 +26,7 @@ public class ProcessChunkThread extends ChunkHandler implements Runnable{
         int doc_id_counter;
 
         for (int i = 0; i < documents.length; i++){
-            doc_id_counter = (this.block_index * CHUNK_SIZE) + i;
+            doc_id_counter = (this.block_index * CHUNK_SIZE) + i + 1;
 
             String[] fields = documents[i].split("\t");
             if (! fields[1].isEmpty()){
@@ -38,10 +38,12 @@ public class ProcessChunkThread extends ChunkHandler implements Runnable{
                 }
             }
         }
-        System.out.println("Last block written: " + block_index);
-//        System.out.println(intermediateLexicon);
-//        System.out.println(intermediateIndex);
-        write(intermediateIndex, intermediateLexicon, this.block_index);
+        //System.out.println("Last block written: " + block_index);
+        //System.out.println("BLOCK INDEX [LEXICON]: " + intermediateLexicon);
+        //System.out.println("BLOCK INDEX [INDEX]: " + intermediateIndex);
+        String index_filename = String.format(this.basename + "index/block_index_%05d.bin", this.block_index);
+        String lexicon_filename = String.format(this.basename + "lexicon/block_lexicon_%05d.bin", this.block_index);
+        write(intermediateIndex, intermediateLexicon, index_filename, lexicon_filename, true);
     }
 
 }

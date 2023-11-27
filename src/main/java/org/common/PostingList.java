@@ -1,6 +1,7 @@
 package org.common;
 
-import java.io.Serializable;
+import org.common.encoding.EncoderInterface;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -39,8 +40,14 @@ public class PostingList implements Iterable<Posting>{
 
         while (buffer.hasRemaining()){
             tf = buffer.get();  // return 1 byte
+
+            if(tf < 0)
+                System.out.println("ERROREEEEEE ---- " + tf);
+
             position_tmp = buffer.position();
-            for(i = 0; (buffer.get()) > 0; i++){}
+            i = 0;
+            while((buffer.get()) >= 0)
+                i++;
             b = new byte[i + 1];
 
             buffer.position(position_tmp);
