@@ -18,6 +18,8 @@ public class MainClass {
         logger.info("Offline Phase has started");
         String tarGzFilePath = "data/collection.tar.gz";
 
+        // TODO - read flags from argv
+
         try (FileInputStream inputStream = new FileInputStream(tarGzFilePath);
              BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
              GzipCompressorInputStream gzipCompressorInputStream = new GzipCompressorInputStream(bufferedInputStream);
@@ -27,7 +29,7 @@ public class MainClass {
             long startTime = System.currentTimeMillis();
 
             Spimi spimi = new Spimi();
-            //spimi.run(tarArchiveInputStream);
+            spimi.run(tarArchiveInputStream);
             spimi.merge_chunks();
             //spimi.debug_fun();
 

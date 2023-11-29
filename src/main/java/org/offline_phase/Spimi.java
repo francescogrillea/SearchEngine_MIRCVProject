@@ -32,11 +32,11 @@ public class Spimi extends ChunkHandler {
                         chunk_text.append(line).append("\n");
                         doc_id_counter++;
                     }
-                }while(doc_id_counter < CHUNK_SIZE * (block_id_counter+1) && line != null && doc_id_counter < _DEBUG_N_DOCS);
+                }while(doc_id_counter < CHUNK_SIZE * (block_id_counter+1) && line != null);
 
                 threadpool.submit(new ProcessChunkThread(chunk_text, block_id_counter, parser));
                 block_id_counter++;
-            }while (line != null && doc_id_counter < _DEBUG_N_DOCS);
+            }while (line != null);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -65,7 +65,7 @@ public class Spimi extends ChunkHandler {
 
         String current_lexicon_filename;
 
-        // TODO - we can use multithreading in merging lexicon
+        // TODO - we can use multithreading in merging lexicon -> seems not
         // merge all intermediate lexicon to create a unique one
         for (File lexiconFile : lexicon_files) {
             current_lexicon_filename = lexiconFile.getPath();
@@ -89,6 +89,7 @@ public class Spimi extends ChunkHandler {
                 PostingList p = readPostingList(index_directory.getPath(), termEntry, true);
                 current_posting_list.appendPostings(p);
             }
+            current_posting_list.generatePointers();
             merged_index.addPostingList(current_posting_list);
             i++;
         }
@@ -101,14 +102,13 @@ public class Spimi extends ChunkHandler {
     public void debug_fun(){
         Lexicon lexicon = readLexicon("data/lexicon.bin");
 
-        System.out.println(lexicon);
-//
-//        TermEntryList tel = lexicon.get("atom");
-//        System.out.println(tel);
-//        int n = tel.getTermEntryList().size();
-//
-//        PostingList postingList = readPostingList("data/", tel.getTermEntryList().get(n-1), false);
-//        System.out.println(postingList);
+
+        TermEntryList tel = lexicon.get("manhattan");
+        System.out.println(tel);
+        int n = tel.getTermEntryList().size();
+
+        PostingList postingList = readPostingList("data/", tel.getTermEntryList().get(n-1), false);
+        System.out.println(postingList);
     }
 
 }

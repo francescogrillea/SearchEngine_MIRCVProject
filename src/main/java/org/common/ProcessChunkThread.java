@@ -19,6 +19,8 @@ public class ProcessChunkThread extends ChunkHandler implements Runnable{
     @Override
     public void run() {
 
+        logger.info("Block " + this.block_index + " has stated to be processed");
+
         InvertedIndex intermediateIndex = new InvertedIndex();
         Lexicon intermediateLexicon = new Lexicon();
 
