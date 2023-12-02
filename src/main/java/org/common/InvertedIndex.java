@@ -1,9 +1,10 @@
 package org.common;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-public class InvertedIndex implements InvertedIndexInterface {
+public class InvertedIndex implements InvertedIndexInterface, Iterable<PostingList> {
 
     private List<PostingList> inverted_index;
 
@@ -48,5 +49,10 @@ public class InvertedIndex implements InvertedIndexInterface {
     @Override
     public String toString() {
         return "InvertedIndex{" + inverted_index + "}";
+    }
+
+    @Override
+    public Iterator iterator() {
+        return this.inverted_index.iterator();
     }
 }

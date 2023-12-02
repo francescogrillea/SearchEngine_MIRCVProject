@@ -6,7 +6,7 @@ public class TermEntry implements Serializable {
     private int block_index;
     private long offset;
     private long length;    // TODO - change to integer to save space
-    private int document_frequency;
+    private final int document_frequency;
 
     public TermEntry(int block_index, long offset, long length) {
         this.block_index = block_index;
@@ -31,6 +31,9 @@ public class TermEntry implements Serializable {
         return document_frequency;
     }
 
+    public void setBlock_index(int block_index) {
+        this.block_index = block_index;
+    }
     @Override
     public String toString() {
         return "TermEntry{" +

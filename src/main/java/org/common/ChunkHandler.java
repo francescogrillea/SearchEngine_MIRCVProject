@@ -12,82 +12,142 @@ public class ChunkHandler {
 
     protected final String basename = "data/intermediate_postings/";
     protected final int  CHUNK_SIZE = 10240;     // in MB or just n-docs
-    protected final int _DEBUG_N_DOCS = CHUNK_SIZE * 10;    // n of documents we want to analyze
+    protected final int _DEBUG_N_DOCS = Integer.MAX_VALUE;    // n of documents we want to analyze
     static Logger logger = Logger.getLogger(Spimi.class.getName());
 
 
-    protected void write(InvertedIndex invertedIndex, Lexicon lexicon, String index_filename, String lexicon_filename, boolean intermediate){
+//    protected void write(InvertedIndex invertedIndex, Lexicon lexicon, String index_filename, String lexicon_filename, boolean intermediate){
+//
+//        int block_index = 0;
+//        if(intermediate){
+//            block_index = Integer.parseInt(index_filename.substring(27+18, 27+18+5));
+//        }
+//
+//        try (FileOutputStream indexFileOutputStream = new FileOutputStream(index_filename, false);
+//             FileChannel indexFileChannel = indexFileOutputStream.getChannel();
+//             FileOutputStream lexiconFileOutputStream = new FileOutputStream(lexicon_filename, false);
+//             ObjectOutputStream lexiconOutputStream = new ObjectOutputStream(lexiconFileOutputStream)) {
+//
+//            // to save the starting position
+//            long startPosition;
+//            long length;
+//            TermEntryList termEntryList;
+//            PostingList postingList;
+//            EncoderInterface encoder = new VBEncoder(); // TODO - metterlo come parametro di funzione
+//
+//            long pointerFilePosition;
+//            long blockStartPosition;
+//            for(String key : lexicon.keySet()){
+//
+//                termEntryList = lexicon.get(key);
+//                startPosition = indexFileChannel.position();
+//
+//                postingList = invertedIndex.getInverted_index().get(termEntryList.getTerm_index());
+//
+//                // If not intermediate postings, write also the skipping pointers
+//                if(!intermediate) {
+//                    int i = 0;
+//                    // TODO - add postingList.generateSkipping() here or back ?
+//                    for (SkippingPointer pointer : postingList.getSkipping_points()) {
+//
+//                        // where the skipping pointer must be written
+//                        pointerFilePosition = indexFileChannel.position();
+//
+//                        // reserve the space for the Skipping Pointer
+//                        indexFileChannel.position(pointerFilePosition + SkippingPointer.SIZE);
+//
+//                        blockStartPosition = indexFileChannel.position();
+//                        while (i < postingList.getSize() && pointer.getMax_doc_id() >= postingList.getPosting(i).getDoc_id()) {
+//                            Posting posting = postingList.getPostingList().get(i);
+//                            indexFileChannel.write(posting.serialize(encoder));
+//                            i++;
+//                        }
+//                        pointer.setOffset((short) (indexFileChannel.position() - blockStartPosition));
+//                        indexFileChannel.write(pointer.serialize(), pointerFilePosition);
+//                    }
+//                }else{
+//                    for(Posting posting : postingList){
+//                        indexFileChannel.write(posting.serialize(encoder));
+//                    }
+//                }
+//                length = indexFileChannel.position() - startPosition;
+//                if(intermediate)
+//                    lexicon.get(key).addTermEntry(new TermEntry(block_index, startPosition, length));
+//                else
+//                    lexicon.get(key).resetTermEntry(new TermEntry(block_index, startPosition, length));
+//            }
+//            lexiconOutputStream.writeObject(lexicon);
+////            System.out.println("BLOCK " + block_index + " [LEXICON]: " + lexicon);
+////            System.out.println("BLOCK " + block_index + " [INDEX]: " + invertedIndex);
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        if(intermediate)
+//            logger.info("Block " + block_index +" has been written on disk");
+//        else
+//            logger.info("Final Index and Lexicon has been written on disk");
+//    }
 
-        int block_index = 0;
-        if(intermediate){
-            block_index = Integer.parseInt(index_filename.substring(27+18, 27+18+5));
-        }
 
-        try (FileOutputStream indexFileOutputStream = new FileOutputStream(index_filename, false);
-             FileChannel indexFileChannel = indexFileOutputStream.getChannel();
-             FileOutputStream lexiconFileOutputStream = new FileOutputStream(lexicon_filename, false);
+    protected void writeLexicon(String lexicon_filename, Lexicon lexicon, boolean intermediate){
+
+        try (FileOutputStream lexiconFileOutputStream = new FileOutputStream(lexicon_filename, false);
              ObjectOutputStream lexiconOutputStream = new ObjectOutputStream(lexiconFileOutputStream)) {
 
             // to save the starting position
-            long startPosition;
-            long length;
-            TermEntryList termEntryList;
-            PostingList postingList;
-            EncoderInterface encoder = new VBEncoder(); // TODO - metterlo come parametro di funzione
-
-            long pointerFilePosition;
-            long blockStartPosition;
-            for(String key : lexicon.keySet()){
-
-                termEntryList = lexicon.get(key);
-                startPosition = indexFileChannel.position();
-
-                postingList = invertedIndex.getInverted_index().get(termEntryList.getTerm_index());
-
-                // If not intermediate postings, write also the skipping pointers
-                if(!intermediate) {
-                    int i = 0;
-                    // TODO - add postingList.generateSkipping() here or back ?
-                    for (SkippingPointer pointer : postingList.getSkipping_points()) {
-
-                        // where the skipping pointer must be written
-                        pointerFilePosition = indexFileChannel.position();
-
-                        // reserve the space for the Skipping Pointer
-                        indexFileChannel.position(pointerFilePosition + SkippingPointer.SIZE);
-
-                        blockStartPosition = indexFileChannel.position();
-                        while (i < postingList.getSize() && pointer.getMax_doc_id() >= postingList.getPosting(i).getDoc_id()) {
-                            Posting posting = postingList.getPostingList().get(i);
-                            indexFileChannel.write(posting.serialize(encoder));
-                            i++;
-                        }
-                        pointer.setOffset((short) (indexFileChannel.position() - blockStartPosition));
-                        indexFileChannel.write(pointer.serialize(), pointerFilePosition);
-                    }
-                }else{
-                    for(Posting posting : postingList){
-                        indexFileChannel.write(posting.serialize(encoder));
-                    }
-                }
-                length = indexFileChannel.position() - startPosition;
-                if(intermediate)
-                    lexicon.get(key).addTermEntry(new TermEntry(block_index, startPosition, length));
-                else
-                    lexicon.get(key).resetTermEntry(new TermEntry(block_index, startPosition, length));
-            }
-            lexiconOutputStream.writeObject(lexicon);
-//            System.out.println("BLOCK " + block_index + " [LEXICON]: " + lexicon);
-//            System.out.println("BLOCK " + block_index + " [INDEX]: " + invertedIndex);
-
+            lexiconOutputStream.writeObject(lexicon);   // TODO - serialize manually
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        if(intermediate)
-            logger.info("Block " + block_index +" has been written on disk");
-        else
-            logger.info("Final Index and Lexicon has been written on disk");
+//        System.out.println(lexicon);
+        logger.info("Lexicon " + lexicon_filename + " has been written on disk");
+    }
+
+    public TermEntry writePostingList(FileChannel indexFileChannel, PostingList postingList, boolean intermediate) throws IOException {
+
+        // to save the starting position
+        long startPosition;
+        long length;
+
+        EncoderInterface encoder = new VBEncoder(); // TODO - metterlo come parametro di funzione ?
+
+        long pointerFilePosition;
+        long blockStartPosition;
+
+        startPosition = indexFileChannel.position();
+
+        if(!intermediate){
+            int i = 0;
+            // TODO - add postingList.generateSkipping() here or back ?
+            for (SkippingPointer pointer : postingList.getSkipping_points()) {
+
+                // where the skipping pointer must be written
+                pointerFilePosition = indexFileChannel.position();
+
+                // reserve the space for the Skipping Pointer
+                indexFileChannel.position(pointerFilePosition + SkippingPointer.SIZE);
+
+                blockStartPosition = indexFileChannel.position();
+                while (i < postingList.getSize() && pointer.getMax_doc_id() >= postingList.getPosting(i).getDoc_id()) {
+                    Posting posting = postingList.getPostingList().get(i);
+                    indexFileChannel.write(posting.serialize(encoder));
+                    i++;
+                }
+                pointer.setOffset((short) (indexFileChannel.position() - blockStartPosition));
+                indexFileChannel.write(pointer.serialize(), pointerFilePosition);
+            }
+        }else{
+            for(Posting posting : postingList){
+                indexFileChannel.write(posting.serialize(encoder));
+            }
+        }
+        length = indexFileChannel.position() - startPosition;
+
+        //System.out.println(postingList);
+        return new TermEntry(-1, startPosition, length);
     }
 
 

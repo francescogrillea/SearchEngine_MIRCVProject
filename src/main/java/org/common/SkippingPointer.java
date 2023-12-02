@@ -19,7 +19,7 @@ public class SkippingPointer {
     }
 
     public ByteBuffer serialize(){
-        ByteBuffer byteBuffer = ByteBuffer.allocate(2 * Integer.BYTES);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(2 * Integer.BYTES); // TODO - 2 * integer + short
         byteBuffer.putInt(max_doc_id);
         byteBuffer.putShort(offset);
         byteBuffer.flip();
