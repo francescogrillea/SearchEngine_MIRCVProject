@@ -13,24 +13,27 @@ import opennlp.tools.stemmer.PorterStemmer;
 
 public class ContentParser {
 
-    private List<String> stopwords;
+    private final boolean flag;
+    private final List<String> stopwords;
 
-    public ContentParser(String stopword_filepath) {
+    public ContentParser(String stopword_filepath, boolean flag) {
 
+        this.flag = flag;
         this.stopwords = new ArrayList<String>();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(stopword_filepath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) {
+        if(flag){
+            try (BufferedReader reader = new BufferedReader(new FileReader(stopword_filepath))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
                     // Skip empty lines
-                    continue;
-                }
+                    if (line.trim().isEmpty())
+                        continue;
 
-                this.stopwords.add(line);
+                    this.stopwords.add(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -42,7 +45,10 @@ public class ContentParser {
         s2.replaceAll(ContentParser::removeSpecialCharacters);
         s2.removeIf(String::isEmpty);
 
-        return stemming(removeStopWords(s2));
+        if(this.flag)
+            s2 = stemming(removeStopWords(s2));
+
+        return s2;
     }
 
     public String removePunctuation(String content){

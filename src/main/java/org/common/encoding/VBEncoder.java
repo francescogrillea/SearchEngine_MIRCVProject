@@ -3,6 +3,8 @@ package org.common.encoding;
 
 import org.common.encoding.EncoderInterface;
 
+import java.nio.ByteBuffer;
+
 import static java.lang.Math.log;
 
 public class VBEncoder implements EncoderInterface {
@@ -24,7 +26,22 @@ public class VBEncoder implements EncoderInterface {
     }
 
     @Override
-    public int decode(byte[] encodedBytes) {
+    public int decode(ByteBuffer buffer) {
+
+        byte[] encodedBytes;
+
+        // save the beginning of the doc_id
+        int position_tmp = buffer.position();
+
+        // how many bytes are for doc_id
+        int i = 0;
+        while((buffer.get()) >= 0)
+            i++;
+        encodedBytes = new byte[i + 1];
+
+        // return to where the doc_id starts
+        buffer.position(position_tmp);
+        buffer.get(encodedBytes);
 
         int n = 0;
         for (byte b : encodedBytes) {

@@ -1,14 +1,14 @@
-package org.common;
+package org.offline_phase;
 
-import org.apache.commons.lang3.SerializationUtils;
+import org.common.*;
 import org.offline_phase.ContentParser;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.List;
+import org.common.ChunkHandler;
 
-public class ProcessChunkThread extends ChunkHandler implements Runnable{
+public class ProcessChunkThread implements Runnable{
 
     private final ContentParser parser;
     private final String chunk_content;
@@ -23,7 +23,7 @@ public class ProcessChunkThread extends ChunkHandler implements Runnable{
     @Override
     public void run() {
 
-        logger.info("Block " + this.block_index + " has stated to be processed");
+        Spimi.logger.info("Block " + this.block_index + " has stated to be processed");
 
         InvertedIndex intermediateIndex = new InvertedIndex();
         Lexicon intermediateLexicon = new Lexicon();
@@ -34,7 +34,7 @@ public class ProcessChunkThread extends ChunkHandler implements Runnable{
         String[] fields;
 
         for (int i = 0; i < documents.length; i++){
-            doc_id_counter = (this.block_index * CHUNK_SIZE) + i + 1;
+            doc_id_counter = (this.block_index * Spimi.CHUNK_SIZE) + i + 1;
 
             fields = documents[i].split("\t");
             if (!fields[1].isEmpty()){
@@ -47,8 +47,8 @@ public class ProcessChunkThread extends ChunkHandler implements Runnable{
             }
         }
 
-        String index_filename = String.format(this.basename + "index/block_index_%05d.bin", this.block_index);
-        String lexicon_filename = String.format(this.basename + "lexicon/block_lexicon_%05d.bin", this.block_index);
+        String index_filename = String.format(ChunkHandler.basename_intermediate_index + "block_index_%05d.bin", this.block_index);
+        String lexicon_filename = String.format(ChunkHandler.basename_intermediate_lexicon + "block_lexicon_%05d.bin", this.block_index);
 
         // write intermediate posting lists and intermediate lexicon to disk
         try (FileOutputStream indexFileOutputStream = new FileOutputStream(index_filename, false);
@@ -57,7 +57,7 @@ public class ProcessChunkThread extends ChunkHandler implements Runnable{
             TermEntry termEntry;
             for(String term : intermediateLexicon.keySet()){
                 int posting_index = intermediateLexicon.get(term).getTerm_index();
-                termEntry = writePostingList(indexFileChannel, intermediateIndex.getInverted_index().get(posting_index), true);
+                termEntry = ChunkHandler.writePostingList(indexFileChannel, intermediateIndex.getInverted_index().get(posting_index), true);
                 termEntry.setBlock_index(this.block_index);
                 intermediateLexicon.get(term).addTermEntry(termEntry);
             }
@@ -65,7 +65,7 @@ public class ProcessChunkThread extends ChunkHandler implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
-        writeLexicon(lexicon_filename, intermediateLexicon, true);
+        ChunkHandler.writeLexicon(intermediateLexicon, lexicon_filename, true);
     }
 
 }

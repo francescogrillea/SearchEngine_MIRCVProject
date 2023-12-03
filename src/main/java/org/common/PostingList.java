@@ -8,8 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class PostingList implements Iterable<Posting>{
-    private List<Posting> postingList;
-    private List<SkippingPointer> skipping_points;
+    private final List<Posting> postingList;
+    private final List<SkippingPointer> skipping_points;
     private int size;
 
     public PostingList() {
@@ -31,9 +31,6 @@ public class PostingList implements Iterable<Posting>{
 
         byte tf;
         int doc_id;
-        byte[] b;
-        int i;
-        int position_tmp;
         SkippingPointer pointer = null;
 
         while (buffer.hasRemaining()){
@@ -47,18 +44,8 @@ public class PostingList implements Iterable<Posting>{
 
             do{
                 tf = buffer.get();  // return 1 byte
+                doc_id = encoder.decode(buffer);
 
-                // save the position of the beginning of
-                position_tmp = buffer.position();
-                i = 0;
-                while((buffer.get()) >= 0)
-                    i++;
-                b = new byte[i + 1];
-
-                buffer.position(position_tmp);
-                buffer.get(b);
-
-                doc_id = encoder.decode(b);
                 this.postingList.add(new Posting(doc_id, tf));
             }while (pointers && pointer.getMax_doc_id() > doc_id);
 

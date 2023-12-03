@@ -1,8 +1,10 @@
 package org.common.encoding;
 
+import java.nio.ByteBuffer;
+
 public interface EncoderInterface {
 
     byte[] encode(int value);
-    int decode(byte[] encodedBytes);
+    int decode(ByteBuffer encodedBytes);
 
 }

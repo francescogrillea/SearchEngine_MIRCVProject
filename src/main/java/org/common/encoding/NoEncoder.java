@@ -13,10 +13,7 @@ public class NoEncoder implements EncoderInterface {
     }
 
     @Override
-    public int decode(byte[] encodedBytes) {
-        if (encodedBytes.length != 4)
-            throw new IllegalArgumentException("Byte array must be of length 4");
-
-        return ByteBuffer.wrap(encodedBytes).getInt();
+    public int decode(ByteBuffer encodedBytes) {
+        return encodedBytes.getInt();
     }
 }
