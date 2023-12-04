@@ -1,6 +1,7 @@
 package org.common;
 
 import org.common.encoding.EncoderInterface;
+import org.common.encoding.GapEncoder;
 import org.common.encoding.VBEncoder;
 import org.offline_phase.Spimi;
 import java.io.*;
@@ -49,6 +50,7 @@ public class ChunkHandler {
         if(!intermediate){
             int i = 0;
             // TODO - add postingList.generateSkipping() here or back ?
+            GapEncoder gap_encoder= new GapEncoder();
             for (SkippingPointer pointer : postingList.getSkipping_points()) {
 
                 // where the skipping pointer must be written
@@ -58,17 +60,21 @@ public class ChunkHandler {
                 indexFileChannel.position(pointerFilePosition + SkippingPointer.SIZE);
 
                 blockStartPosition = indexFileChannel.position();
+                int prec_doc_id=0;
                 while (i < postingList.getSize() && pointer.getMax_doc_id() >= postingList.getPosting(i).getDoc_id()) {
                     Posting posting = postingList.getPostingList().get(i);
-                    indexFileChannel.write(posting.serialize(encoder));
+                    indexFileChannel.write(posting.serialize(encoder,prec_doc_id));
+                    prec_doc_id=posting.getDoc_id();
                     i++;
                 }
                 pointer.setOffset((short) (indexFileChannel.position() - blockStartPosition));
                 indexFileChannel.write(pointer.serialize(), pointerFilePosition);
             }
         }else{
+            int prec_doc_id=0;
             for(Posting posting : postingList){
-                indexFileChannel.write(posting.serialize(encoder));
+                indexFileChannel.write(posting.serialize(encoder,prec_doc_id));
+                prec_doc_id=posting.getDoc_id();
             }
         }
         length = indexFileChannel.position() - startPosition;

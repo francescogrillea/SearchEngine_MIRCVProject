@@ -109,7 +109,7 @@ public class Spimi {
                     postingList.appendPostings(p);
                 }
                 postingList.generatePointers();
-                System.out.println("Term: " + term + "\t -> " + postingList);
+                //System.out.println("Term: " + term + "\t -> " + postingList);
                 finalTermEntry = ChunkHandler.writePostingList(indexFileChannel, postingList, false);
 
                 merged_lexicon.get(term).resetTermEntry(finalTermEntry);

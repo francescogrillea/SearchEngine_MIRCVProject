@@ -1,6 +1,7 @@
 package org.common;
 
 import org.common.encoding.EncoderInterface;
+import org.common.encoding.GapEncoder;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -20,7 +21,10 @@ public class Posting implements Comparable<Integer> {
         this.term_frequency = term_frequency;
     }
 
-    public ByteBuffer serialize(EncoderInterface encoder){
+    public ByteBuffer serialize(EncoderInterface encoder, int prec_doc_id){
+
+        GapEncoder gap_encoder = new GapEncoder();
+        this.doc_id=gap_encoder.encode(prec_doc_id,this.doc_id);
 
         byte[] encoded = encoder.encode(this.doc_id);
         ByteBuffer byteBuffer = ByteBuffer.allocate((Byte.SIZE + (Byte.SIZE * encoded.length)) / 8);
