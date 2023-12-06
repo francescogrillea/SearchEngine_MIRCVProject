@@ -1,22 +1,23 @@
 package org.common.encoding;
 
+// TODO provare a fare in modo che implementi EncoderInterface
 public class GapEncoder {
 
+    private int last_doc_id;
     public GapEncoder() {
-
+        this.last_doc_id = 0;
     }
 
-    public int encode(int prec_doc_id, int doc_id){
-        int gap =  doc_id - prec_doc_id;
-        System.out.println("ENCODING DOCID: "+ doc_id+ " IN GAP "+ gap + " with PREC DOCID "+ prec_doc_id);
-        return gap;
+    public int encode(int doc_id){
+        int out = doc_id - this.last_doc_id;
+        this.last_doc_id = doc_id;
+        return out;
     }
 
-    public int decode(int gap, int prec_doc_id){
-        int doc_id=gap+prec_doc_id;
-        System.out.println("DECODING GAP: "+ gap+ " IN DOCID "+ doc_id + " with PREC DOCID "+ prec_doc_id);
-        return doc_id;
+    public int decode(int doc_id){
+        int out = this.last_doc_id + doc_id;
+        this.last_doc_id = out;
+        return out;
     }
-
 
 }

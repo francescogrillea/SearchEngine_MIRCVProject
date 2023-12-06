@@ -19,7 +19,7 @@ public class ContentParser {
     public ContentParser(String stopword_filepath, boolean flag) {
 
         this.flag = flag;
-        this.stopwords = new ArrayList<String>();
+        this.stopwords = new ArrayList<>();
 
         if(flag){
             try (BufferedReader reader = new BufferedReader(new FileReader(stopword_filepath))) {
@@ -38,23 +38,29 @@ public class ContentParser {
     }
 
     public List<String> processContent(String content){
+
         String s = removePunctuation(content);
-        String[] s1 = s.split(" ");
-        List<String> s2 = new ArrayList<String>(Arrays.asList(s1));
-        s2.replaceAll(String::toLowerCase);
-        s2.replaceAll(ContentParser::removeSpecialCharacters);
-        s2.removeIf(String::isEmpty);
+        s = removeSpecialCharacters(s);
+        List<String> terms = splitWords(s);
+        terms.replaceAll(String::toLowerCase);
+        terms.removeIf(String::isEmpty);
 
         if(this.flag)
-            s2 = stemming(removeStopWords(s2));
+            terms = stemming(removeStopWords(terms));
 
-        return s2;
+        return terms;
+    }
+
+    private List<String> splitWords(String s) {
+        s = s.replaceAll("(?<=\\p{Lower})(?=\\p{Upper})", " ");
+        String[] s1 = s.split(" ");
+        return new ArrayList<String>(Arrays.asList(s1));
     }
 
     public String removePunctuation(String content){
         String regex = "[\\p{Punct}]";
         Pattern pattern = Pattern.compile(regex);
-        return pattern.matcher(content).replaceAll("");
+        return pattern.matcher(content).replaceAll(" ");
     }
 
     public List<String> removeStopWords(List<String> words){
@@ -74,8 +80,8 @@ public class ContentParser {
     }
 
 
-    private static String removeSpecialCharacters(String line) {
-        return line.replaceAll("[^a-zA-Z0-9]", "");
+    private String removeSpecialCharacters(String line) {
+        return line.replaceAll("[^a-zA-Z0-9]", " ");
     }
 
 }

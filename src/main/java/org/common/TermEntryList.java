@@ -1,17 +1,25 @@
 package org.common;
 
+import org.apache.commons.lang3.SerializationException;
+
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class TermEntryList implements Serializable, Iterable<TermEntry>{        // TODO - should implement TermEntryInterface ?
+public class TermEntryList implements Iterable<TermEntry>{        // TODO - should implement TermEntryInterface ?
     private transient int term_index;
     private List<TermEntry> termEntryList;
 
     public TermEntryList(int term_index) {
         this.term_index = term_index;
         this.termEntryList = new ArrayList<>();
+    }
+
+    public TermEntryList(TermEntry termEntry){
+        this.termEntryList = new ArrayList<>();
+        this.termEntryList.add(termEntry);
     }
 
     public void addTermEntry(TermEntry termEntry){
@@ -52,4 +60,10 @@ public class TermEntryList implements Serializable, Iterable<TermEntry>{        
         return this.termEntryList.iterator();
     }
 
+    public ByteBuffer serialize() {
+        if(this.termEntryList.size() > 1)
+            throw new ArrayIndexOutOfBoundsException();
+
+        return this.termEntryList.get(0).serialize();
+    }
 }

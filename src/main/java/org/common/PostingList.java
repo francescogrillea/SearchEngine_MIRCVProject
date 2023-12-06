@@ -9,8 +9,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class PostingList implements Iterable<Posting>{
-    private  List<Posting> postingList;
-    private  List<SkippingPointer> skipping_points;
+    private final List<Posting> postingList;
+    private final List<SkippingPointer> skipping_points;
     private int size;
 
     public PostingList() {
@@ -37,7 +37,6 @@ public class PostingList implements Iterable<Posting>{
         GapEncoder gap_encoder = new GapEncoder();
 
         while (buffer.hasRemaining()){
-            int prec_doc_id=0;
 
             if(pointers){
                 int max_doc_id = buffer.getInt();
@@ -48,10 +47,7 @@ public class PostingList implements Iterable<Posting>{
 
             do{
                 tf = buffer.get();  // return 1 byte
-
-
-                doc_id = gap_encoder.decode(encoder.decode(buffer),prec_doc_id);
-                prec_doc_id=doc_id;
+                doc_id = gap_encoder.decode(encoder.decode(buffer));
 
                 this.postingList.add(new Posting(doc_id, tf));
             }while (pointers && pointer.getMax_doc_id() > doc_id);

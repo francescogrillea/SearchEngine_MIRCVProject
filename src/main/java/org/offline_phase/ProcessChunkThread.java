@@ -1,7 +1,6 @@
 package org.offline_phase;
 
 import org.common.*;
-import org.offline_phase.ContentParser;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -23,7 +22,7 @@ public class ProcessChunkThread implements Runnable{
     @Override
     public void run() {
 
-        Spimi.logger.info("Block " + this.block_index + " has stated to be processed");
+        // Spimi.logger.info("Block " + this.block_index + " has stated to be processed");
 
         InvertedIndex intermediateIndex = new InvertedIndex();
         Lexicon intermediateLexicon = new Lexicon();
@@ -55,6 +54,7 @@ public class ProcessChunkThread implements Runnable{
              FileChannel indexFileChannel = indexFileOutputStream.getChannel()) {
 
             TermEntry termEntry;
+
             for(String term : intermediateLexicon.keySet()){
                 int posting_index = intermediateLexicon.get(term).getTerm_index();
                 termEntry = ChunkHandler.writePostingList(indexFileChannel, intermediateIndex.getInverted_index().get(posting_index), true);

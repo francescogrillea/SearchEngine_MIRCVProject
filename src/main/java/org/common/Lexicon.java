@@ -1,15 +1,38 @@
 package org.common;
 
 import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class Lexicon implements LexiconInterface, Serializable {
+public class Lexicon implements LexiconInterface {
 
     private HashMap<String, TermEntryList> lexicon;
     private transient int size = 0;
 
     public Lexicon() {
         this.lexicon = new HashMap<>();
+    }
+
+    public Lexicon(ByteBuffer buffer){
+        this.lexicon = new HashMap<>();
+        int word_length;
+        byte[] word;
+        TermEntry i;
+
+        while (buffer.hasRemaining()){
+
+            // read how many byes the term need
+            word_length = buffer.getShort();
+            // read the term
+            word = new byte[word_length];
+            buffer.get(word);
+            // read the term entry
+            i = new TermEntry(buffer.getInt(), buffer.getLong(), buffer.getLong());
+
+            this.lexicon.put(new String(word, StandardCharsets.UTF_8), new TermEntryList(i));
+        }
+        //System.out.println("Lexicon read: " + lexicon);
     }
 
     @Override
@@ -39,6 +62,22 @@ public class Lexicon implements LexiconInterface, Serializable {
             this.lexicon.get(term).addTermEntries(entries);
         }
         return index;
+    }
+
+    public ByteBuffer serializeEntry(String key){
+
+        ByteBuffer byteBuffer = ByteBuffer.allocate(Short.BYTES + (2 * key.length()) + TermEntry.BYTES);    // at most 2 bytes for each char
+        byte[] byte_repr = key.getBytes();
+        byteBuffer.putShort((short) byte_repr.length);    // store the length of the term -> 2 words are > 128
+        byteBuffer.put(byte_repr);
+
+        byteBuffer.put(this.get(key).serialize());
+
+        byteBuffer.flip();
+        byteBuffer = byteBuffer.compact();
+
+        byteBuffer.flip();
+        return byteBuffer;
     }
 
     public void merge(Lexicon new_lexicon){

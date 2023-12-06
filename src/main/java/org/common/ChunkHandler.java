@@ -23,17 +23,16 @@ public class ChunkHandler {
 
     public static void writeLexicon(Lexicon lexicon, String lexicon_filename, boolean intermediate){
 
-        try (FileOutputStream lexiconFileOutputStream = new FileOutputStream(lexicon_filename, false);
-             ObjectOutputStream lexiconOutputStream = new ObjectOutputStream(lexiconFileOutputStream)) {
+        try (FileOutputStream indexFileOutputStream = new FileOutputStream(lexicon_filename, false);
+             FileChannel indexFileChannel = indexFileOutputStream.getChannel()) {
 
-            // to save the starting position
-            lexiconOutputStream.writeObject(lexicon);   // TODO - serialize manually
+            for(String k : lexicon.keySet())
+                indexFileChannel.write(lexicon.serializeEntry(k));
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-//        System.out.println(lexicon);
-        logger.info("Lexicon " + lexicon_filename + " has been written on disk");
+        logger.info("Lexicon " + lexicon_filename + " written on disk");
     }
 
     public static TermEntry writePostingList(FileChannel indexFileChannel, PostingList postingList, boolean intermediate) throws IOException {
@@ -46,11 +45,14 @@ public class ChunkHandler {
         long blockStartPosition;
 
         startPosition = indexFileChannel.position();
+        GapEncoder gap_encoder= new GapEncoder();
 
         if(!intermediate){
             int i = 0;
-            // TODO - add postingList.generateSkipping() here or back ?
-            GapEncoder gap_encoder= new GapEncoder();
+            /*
+                TODO - add postingList.generateSkipping() here or back ?
+                    -> if here, be careful to the GAP
+             */
             for (SkippingPointer pointer : postingList.getSkipping_points()) {
 
                 // where the skipping pointer must be written
@@ -60,21 +62,19 @@ public class ChunkHandler {
                 indexFileChannel.position(pointerFilePosition + SkippingPointer.SIZE);
 
                 blockStartPosition = indexFileChannel.position();
-                int prec_doc_id=0;
                 while (i < postingList.getSize() && pointer.getMax_doc_id() >= postingList.getPosting(i).getDoc_id()) {
                     Posting posting = postingList.getPostingList().get(i);
-                    indexFileChannel.write(posting.serialize(encoder,prec_doc_id));
-                    prec_doc_id=posting.getDoc_id();
+                    posting.setDoc_id(gap_encoder.encode(posting.getDoc_id()));
+                    indexFileChannel.write(posting.serialize(encoder));
                     i++;
                 }
                 pointer.setOffset((short) (indexFileChannel.position() - blockStartPosition));
                 indexFileChannel.write(pointer.serialize(), pointerFilePosition);
             }
         }else{
-            int prec_doc_id=0;
             for(Posting posting : postingList){
-                indexFileChannel.write(posting.serialize(encoder,prec_doc_id));
-                prec_doc_id=posting.getDoc_id();
+                posting.setDoc_id(gap_encoder.encode(posting.getDoc_id()));
+                indexFileChannel.write(posting.serialize(encoder));
             }
         }
         length = indexFileChannel.position() - startPosition;
@@ -86,13 +86,17 @@ public class ChunkHandler {
 
     public static Lexicon readLexicon(String lexicon_filename){
 
-        Lexicon lexicon = new Lexicon();
-
+        Lexicon lexicon = null;
         try (FileInputStream lexiconFileInputStream = new FileInputStream(lexicon_filename);
-             ObjectInputStream lexiconInputStream = new ObjectInputStream(lexiconFileInputStream)) {
+             FileChannel indexFileChannel = lexiconFileInputStream.getChannel()) {
 
-            lexicon = (Lexicon) lexiconInputStream.readObject();
-        } catch (IOException | ClassNotFoundException e) {
+            long size = indexFileChannel.size();
+            ByteBuffer buffer = ByteBuffer.allocate((int) size);
+            indexFileChannel.read(buffer);
+            buffer.flip();
+
+            lexicon = new Lexicon(buffer);
+        } catch (IOException e) {
             e.printStackTrace();
         }
         logger.info("Block " + lexicon_filename + " has been read from disk");

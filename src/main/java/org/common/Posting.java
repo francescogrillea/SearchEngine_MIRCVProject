@@ -21,10 +21,7 @@ public class Posting implements Comparable<Integer> {
         this.term_frequency = term_frequency;
     }
 
-    public ByteBuffer serialize(EncoderInterface encoder, int prec_doc_id){
-
-        GapEncoder gap_encoder = new GapEncoder();
-        this.doc_id=gap_encoder.encode(prec_doc_id,this.doc_id);
+    public ByteBuffer serialize(EncoderInterface encoder){
 
         byte[] encoded = encoder.encode(this.doc_id);
         ByteBuffer byteBuffer = ByteBuffer.allocate((Byte.SIZE + (Byte.SIZE * encoded.length)) / 8);
@@ -39,6 +36,10 @@ public class Posting implements Comparable<Integer> {
 
     public int getDoc_id() {
         return doc_id;
+    }
+
+    public void setDoc_id(int doc_id) {
+        this.doc_id = doc_id;
     }
 
     @Override
