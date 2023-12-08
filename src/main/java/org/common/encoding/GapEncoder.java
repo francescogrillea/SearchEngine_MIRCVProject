@@ -20,4 +20,7 @@ public class GapEncoder {
         return out;
     }
 
+    public void setLast_doc_id(int last_doc_id) {
+        this.last_doc_id = last_doc_id;
+    }
 }

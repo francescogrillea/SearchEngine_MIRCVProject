@@ -1,7 +1,6 @@
 package org.offline_phase;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.common.*;
 import org.common.encoding.NoEncoder;
 import org.common.encoding.VBEncoder;
@@ -9,13 +8,6 @@ import org.common.encoding.VBEncoder;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.Path;
-
-import java.util.stream.Collectors;
-
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +17,8 @@ public class Spimi {
 
     private int doc_id_counter = 0;
     private int block_id_counter = 0;
-    static final int  CHUNK_SIZE = 10;
+
+    static final int  CHUNK_SIZE = 2;
     private final int _DEBUG_N_DOCS = Integer.MAX_VALUE;    // n of documents we want to analyze
 
     static Logger logger = Logger.getLogger(Spimi.class.getName());
@@ -40,18 +33,10 @@ public class Spimi {
             ChunkHandler.setEncoder(new NoEncoder());
     }
 
-    public void run(String collection_filepath){
-
+    public void run(TarArchiveInputStream stream){
 
         ExecutorService threadpool = Executors.newFixedThreadPool(50);
-
-        try(FileInputStream inputStream = new FileInputStream(collection_filepath);
-            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
-            GzipCompressorInputStream gzipCompressorInputStream = new GzipCompressorInputStream(bufferedInputStream);
-            TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipCompressorInputStream);
-            BufferedReader br = new BufferedReader(new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8))){
-
-            tarArchiveInputStream.getNextTarEntry();
+        try(BufferedReader br = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))){
 
             ContentParser parser = new ContentParser("data/stop_words_english.txt", this.process_data_flag);
             String line;
@@ -70,19 +55,21 @@ public class Spimi {
                 block_id_counter++;
             }while (line != null && doc_id_counter < _DEBUG_N_DOCS);
 
-            // wait all threads to finish
-            threadpool.shutdown();
-            try{
-                threadpool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-            }catch (InterruptedException e){
-                e.printStackTrace();
-            }
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
+        // wait all threads to finish
+        threadpool.shutdown();
+        try{
+            threadpool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+        }catch (InterruptedException e){
+            e.printStackTrace();
+        }
     }
+
+
+
 
     public void merge_chunks(){
 
@@ -90,20 +77,37 @@ public class Spimi {
         Lexicon current_lexicon;
 
         File lexicon_directory = new File(ChunkHandler.basename_intermediate_lexicon);
-        File[] lexicon_files = lexicon_directory.listFiles();
-        // TODO - assert is != null
+        File docindex_directory = new File("data/intermediate_postings/docindex");
+        File index_directory = new File("data/intermediate_postings/index");
 
+        File[] lexicon_files = lexicon_directory.listFiles();   // TODO - assert is != null
+
+        String current_lexicon_filename;
+
+        // TODO - we can use multithreading in merging lexicon ?
         // merge all intermediate lexicon to create a unique one
-        assert lexicon_files != null;
         for (File lexiconFile : lexicon_files) {
-            current_lexicon = ChunkHandler.readLexicon(ChunkHandler.basename_intermediate_lexicon + lexiconFile.getName());
+            current_lexicon_filename = lexiconFile.getPath();
+            current_lexicon = ChunkHandler.readLexicon(current_lexicon_filename);
             merged_lexicon.merge(current_lexicon);
         }
         logger.info("Intermediate Lexicons merged!");
-        //System.out.println("Merged: " + merged_lexicon);
+        //System.out.println(merged_lexicon);
+        // TODO - if concurrent hash map -> sort term entries by block_id
 
+        File[] dataindex_files = docindex_directory.listFiles();
+        DocIndexList merged_docindex = new DocIndexList();
+        String current_dataindex_filename;
+        DocIndexList current_dataindex;
 
-        // merge intermediate postings
+        for (File row : dataindex_files) {
+            current_dataindex_filename = row.getPath();
+            current_dataindex = ChunkHandler.readDocIndex(current_dataindex_filename);
+            merged_docindex.merge(current_dataindex);
+        }
+
+        System.out.println(merged_docindex);
+
         try (FileOutputStream indexFileOutputStream = new FileOutputStream("data/index.bin", false);
              FileChannel indexFileChannel = indexFileOutputStream.getChannel()) {
 
@@ -121,26 +125,30 @@ public class Spimi {
                     postingList.appendPostings(p);
                 }
                 postingList.generatePointers();
+                //System.out.println("Term: " + term + "\t -> " + postingList);
                 finalTermEntry = ChunkHandler.writePostingList(indexFileChannel, postingList, false);
 
                 merged_lexicon.get(term).resetTermEntry(finalTermEntry);
                 i++;
             }
-            logger.info("Intermediate Posting Lists merged");
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //System.out.println("To be written: " + merged_lexicon);
-        ChunkHandler.writeLexicon(merged_lexicon, ChunkHandler.basename + "lexicon.bin", false);
+        System.out.println(merged_lexicon);
 
+        ChunkHandler.writeLexicon(merged_lexicon, ChunkHandler.basename + "lexicon.bin", false);
+        ChunkHandler.writeDocIndex(merged_docindex, ChunkHandler.basename + "docindex.bin");
+        //ChunkHandler.readDocIndex(ChunkHandler.basename + "docindex.bin");
+
+        logger.info("Intermediate Posting Lists merged");
     }
 
     public void debug_fun(){
         Lexicon lexicon = ChunkHandler.readLexicon("data/lexicon.bin");
-        System.out.println(lexicon);
+        //System.out.println(lexicon);
 
-        TermEntryList termEntries = lexicon.get("manhattan");
+        TermEntryList termEntries = lexicon.get("project");
         PostingList postingList = ChunkHandler.readPostingList(termEntries.getTermEntryList().get(0), false);
         System.out.println(postingList);
     }

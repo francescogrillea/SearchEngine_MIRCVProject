@@ -14,6 +14,7 @@ public class ChunkHandler {
     public static final String basename = "data/";
     public static final String basename_intermediate_index = "data/intermediate_postings/index/";
     public static final String basename_intermediate_lexicon = "data/intermediate_postings/lexicon/";
+    public static final String basename_intermediate_docindex = "data/intermediate_postings/docindex/";
     static Logger logger = Logger.getLogger(Spimi.class.getName());
     private static EncoderInterface encoder;
 
@@ -127,5 +128,37 @@ public class ChunkHandler {
         }
         return null;
     }
+
+
+    public static void writeDocIndex(DocIndexList docIndex, String doc_index_filename){
+
+        try (FileOutputStream docIndexFileOutputStream = new FileOutputStream(doc_index_filename, false);
+             ObjectOutputStream docindexOutputStream = new ObjectOutputStream(docIndexFileOutputStream)) {
+
+            docindexOutputStream.writeObject(docIndex);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public static DocIndexList readDocIndex(String doc_index_filename){
+
+       DocIndexList doc_index = new DocIndexList();
+
+        try (FileInputStream docIndexFileInputStream = new FileInputStream(doc_index_filename);
+             ObjectInputStream docIndexInputStream = new ObjectInputStream(docIndexFileInputStream)) {
+
+            doc_index = (DocIndexList) docIndexInputStream.readObject();
+
+        } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+        }
+
+        logger.info("Block " + doc_index_filename + " has been read from disk");
+        System.out.println(doc_index);
+        return doc_index;
+    }
+
 
 }
