@@ -1,6 +1,5 @@
 package org.common.encoding;
 
-
 import org.common.encoding.EncoderInterface;
 
 import java.nio.ByteBuffer;

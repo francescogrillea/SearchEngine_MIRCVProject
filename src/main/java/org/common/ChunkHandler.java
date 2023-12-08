@@ -14,7 +14,7 @@ public class ChunkHandler {
     public static final String basename = "data/";
     public static final String basename_intermediate_index = "data/intermediate_postings/index/";
     public static final String basename_intermediate_lexicon = "data/intermediate_postings/lexicon/";
-    public static final String basename_intermediate_docindex = "data/intermediate_postings/docindex/";
+    public static final String basename_intermediate_docindex = "data/intermediate_postings/doc_index/";
     static Logger logger = Logger.getLogger(Spimi.class.getName());
     private static EncoderInterface encoder;
 
@@ -129,34 +129,50 @@ public class ChunkHandler {
         return null;
     }
 
+    public static PostingList readPostingList(FileChannel channel, TermEntry termEntry, boolean intermediate) throws IOException {
 
-    public static void writeDocIndex(DocIndexList docIndex, String doc_index_filename){
+        ByteBuffer indexByteBuffer = ByteBuffer.allocate((int) termEntry.getLength());
+        channel.position(termEntry.getOffset());
+        channel.read(indexByteBuffer);
+        indexByteBuffer.flip();
+
+        return new PostingList(indexByteBuffer, encoder, !intermediate);
+    }
+
+
+    public static void writeDocIndex(DocIndex docIndex, String doc_index_filename){
 
         try (FileOutputStream docIndexFileOutputStream = new FileOutputStream(doc_index_filename, false);
-             ObjectOutputStream docindexOutputStream = new ObjectOutputStream(docIndexFileOutputStream)) {
+             FileChannel docIndexFileChannel = docIndexFileOutputStream.getChannel()) {
 
-            docindexOutputStream.writeObject(docIndex);
+            docIndexFileChannel.write(docIndex.serialize());
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+        logger.info("Lexicon " + doc_index_filename + " written on disk");
+
 
     }
 
-    public static DocIndexList readDocIndex(String doc_index_filename){
+    public static DocIndex readDocIndex(String doc_index_filename){
 
-       DocIndexList doc_index = new DocIndexList();
+        DocIndex doc_index = null;
 
         try (FileInputStream docIndexFileInputStream = new FileInputStream(doc_index_filename);
-             ObjectInputStream docIndexInputStream = new ObjectInputStream(docIndexFileInputStream)) {
+             FileChannel docIndexFileChannel = docIndexFileInputStream.getChannel()) {
 
-            doc_index = (DocIndexList) docIndexInputStream.readObject();
+            long size = docIndexFileChannel.size();
+            ByteBuffer buffer = ByteBuffer.allocate((int) size);
+            docIndexFileChannel.read(buffer);
+            buffer.flip();
 
-        } catch (IOException | ClassNotFoundException e) {
+            doc_index = new DocIndex(buffer);
+        } catch (IOException e) {
                 e.printStackTrace();
         }
 
         logger.info("Block " + doc_index_filename + " has been read from disk");
-        System.out.println(doc_index);
         return doc_index;
     }
 

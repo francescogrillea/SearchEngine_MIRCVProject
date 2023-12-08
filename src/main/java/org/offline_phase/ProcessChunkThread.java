@@ -29,7 +29,7 @@ public class ProcessChunkThread implements Runnable{
 
         InvertedIndex intermediateIndex = new InvertedIndex();
         Lexicon intermediateLexicon = new Lexicon();
-        DocIndexList docIndexList = new DocIndexList();
+        DocIndex intemediateDocIndex = new DocIndex();
 
         String[] documents = this.chunk_content.split("\n");
 
@@ -37,30 +37,21 @@ public class ProcessChunkThread implements Runnable{
         int index;
         String[] fields;
 
-        int pid = 0;
         for (int i = 0; i < documents.length; i++){
-            DocIndex doc_index = new DocIndex();
             doc_id_counter = (this.block_index * Spimi.CHUNK_SIZE) + i + 1;
 
-
             fields = documents[i].split("\t");
-
-            // set pid
-            pid = Integer.parseInt(fields[0]);
-            doc_index.setPid(pid);
-            //set document lenght
-            doc_index.setDocLength(documents[i].length());
-            // set document id
-            doc_index.setDoc_id(doc_id_counter);
-
-            docIndexList.addDocIndex(doc_index);
-
 
             if (!fields[1].isEmpty()){
                 List<String> terms = parser.processContent(fields[1]);
 
+                // add the doc_id to DocIndex
+                intemediateDocIndex.add(doc_id_counter, new DocInfo(Integer.parseInt(fields[0]), terms.size())); // TODO - la docIndex prende i termini prima o dopo il processing? -> stopword removal
+
                 for(String term : terms){
+                    // add term to intermediate Lexicon
                     index = intermediateLexicon.add(term);
+                    // add term's posting list to intermediate Index
                     intermediateIndex.addPosting(index, new Posting(doc_id_counter));
                 }
             }
@@ -68,7 +59,7 @@ public class ProcessChunkThread implements Runnable{
 
         String index_filename = String.format(ChunkHandler.basename_intermediate_index + "block_index_%05d.bin", this.block_index);
         String lexicon_filename = String.format(ChunkHandler.basename_intermediate_lexicon + "block_lexicon_%05d.bin", this.block_index);
-        String docindex_filename = String.format("data/intermediate_postings/docindex/"+ "block_docindex_%05d.bin", this.block_index);
+        String docindex_filename = String.format(ChunkHandler.basename_intermediate_docindex + "block_docindex_%05d.bin", this.block_index);
 
 
         // write intermediate posting lists and intermediate lexicon to disk
@@ -88,10 +79,8 @@ public class ProcessChunkThread implements Runnable{
         }
 
         ChunkHandler.writeLexicon(intermediateLexicon, lexicon_filename, true);
-        ChunkHandler.writeDocIndex(docIndexList, docindex_filename);
-
+        ChunkHandler.writeDocIndex(intemediateDocIndex, docindex_filename);
 
     }
-
 
 }

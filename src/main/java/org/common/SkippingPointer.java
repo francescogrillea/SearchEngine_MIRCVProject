@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 public class SkippingPointer {
 
     private int max_doc_id;
-    private short offset;
+    private short offset; // length of the block
 
     public static int SIZE = (Integer.SIZE + Short.SIZE) / 8;
 

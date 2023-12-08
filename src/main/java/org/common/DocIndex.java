@@ -5,85 +5,57 @@ import org.common.encoding.GapEncoder;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Consumer;
 
-public class DocIndex implements Serializable {
+public class DocIndex {
 
-    int doc_id;
-    int doc_length;
-    int pid;
-    private long offset;
-    private long length;
+    private final HashMap<Integer, DocInfo> docIndex;
 
-    public DocIndex(int doc_id, int doc_length, int pid) {
-        this.doc_id = doc_id;
-        this.doc_length = doc_length;
-        this.pid = pid;
+    public DocIndex() {
+        this.docIndex = new HashMap<>();
     }
 
-    public DocIndex(){
-
+    public DocIndex(ByteBuffer buffer){
+        this.docIndex = new HashMap<>();
+        int key;
+        DocInfo value;
+        while (buffer.hasRemaining()){
+            key = buffer.getInt();
+            value = new DocInfo(buffer.getInt(), buffer.getInt());
+            this.docIndex.put(key, value);
+        }
     }
 
-    public void setDoc_id(int doc_id) {
-        System.out.println("doc_id: " + doc_id);
-        this.doc_id = doc_id;
+    public void add(Integer doc_id, DocInfo doc_info){
+        this.docIndex.put(doc_id, doc_info);
     }
 
-    public void setDocLength(int doc_length) {
-        this.doc_length = doc_length;
+    public DocInfo get(Integer doc_id){
+        return this.docIndex.get(doc_id);
     }
 
-    public void setPid(int pid) {
-        this.pid = pid;
-    }
+    public ByteBuffer serialize(){
+        // TODO - add encoder
+        int size = this.docIndex.size();
+        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES * size + DocInfo.BYTES * size);
 
-    public ByteBuffer serialize(EncoderInterface encoder, int prec_doc_id, int prec_pid){
+        for (Map.Entry<Integer, DocInfo> entry : this.docIndex.entrySet()){
+            buffer.putInt(entry.getKey());
+            buffer.put(entry.getValue().serialize());
+        }
 
-        GapEncoder gap_encoder = new GapEncoder();
-        gap_encoder.setLast_doc_id(prec_doc_id);
-        this.doc_id=gap_encoder.encode(this.doc_id);
+        buffer.flip();
 
-        byte[] encoded = encoder.encode(this.doc_id);
-        ByteBuffer byteBuffer = ByteBuffer.allocate((Byte.SIZE*3 + (Byte.SIZE * encoded.length)) / 8);
-
-        byteBuffer.putInt(this.pid);
-        byteBuffer.putInt(this.doc_length);
-        byteBuffer.put(encoded);
-
-        byteBuffer.flip();
-
-        return byteBuffer;
-    }
-
-
-    public int getDoc_id() {
-        return doc_id;
-    }
-
-    public int getDoc_length() {
-        return doc_length;
-    }
-
-    public int getPid() {
-        return pid;
-    }
-
-    public long getOffset() {
-        return offset;
-    }
-
-    public long getLength() {
-        return length;
+        return buffer;
     }
 
     @Override
     public String toString() {
-        return "DocIndex{" +
-                "doc_id=" + doc_id +
-                ", doc_length=" + doc_length +
-                ", pid=" + pid +
+        return "DocIndex{" + docIndex +
                 '}';
     }
 }

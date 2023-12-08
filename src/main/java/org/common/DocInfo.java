@@ -1,11 +1,14 @@
 package org.common;
 
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+
 public class DocInfo {
-
     private final int pid;
-    private final long length;
+    private final int length;
+    static final int BYTES = Integer.BYTES + Integer.BYTES;
 
-    public DocInfo(int pid, long length) {
+    public DocInfo(int pid, int length) {
         this.pid = pid;
         this.length = length;
     }
@@ -18,4 +21,19 @@ public class DocInfo {
         return length;
     }
 
+    public ByteBuffer serialize(){
+        ByteBuffer buffer = ByteBuffer.allocate(BYTES);
+        buffer.putInt(this.pid);
+        buffer.putInt(this.length);
+        buffer.flip();
+        return buffer;
+    }
+
+    @Override
+    public String toString() {
+        return "DocInfo{" +
+                "pid=" + pid +
+                ", length=" + length +
+                '}';
+    }
 }

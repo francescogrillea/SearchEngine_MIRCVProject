@@ -8,7 +8,7 @@ import java.util.*;
 public class Lexicon implements LexiconInterface {
 
     private HashMap<String, TermEntryList> lexicon;
-    private transient int size = 0;
+    private transient int size = 0; // TODO - remove transient
 
     public Lexicon() {
         this.lexicon = new HashMap<>();
@@ -66,6 +66,7 @@ public class Lexicon implements LexiconInterface {
 
     public ByteBuffer serializeEntry(String key){
 
+        // TODO - Short.BYTES + byte_repr.length + TermEntry.BYTES
         ByteBuffer byteBuffer = ByteBuffer.allocate(Short.BYTES + (2 * key.length()) + TermEntry.BYTES);    // at most 2 bytes for each char
         byte[] byte_repr = key.getBytes();
         byteBuffer.putShort((short) byte_repr.length);    // store the length of the term -> 2 words are > 128
@@ -74,7 +75,7 @@ public class Lexicon implements LexiconInterface {
         byteBuffer.put(this.get(key).serialize());
 
         byteBuffer.flip();
-        byteBuffer = byteBuffer.compact();
+        byteBuffer = byteBuffer.compact();  // TODO rimuovere!
 
         byteBuffer.flip();
         return byteBuffer;
@@ -94,6 +95,10 @@ public class Lexicon implements LexiconInterface {
 
     public TermEntryList get(String term){
         return this.lexicon.get(term);
+    }
+
+    public HashMap<String, TermEntryList> getLexicon() {
+        return lexicon;
     }
 
     @Override
