@@ -1,7 +1,6 @@
 package org.common;
 
 import org.common.encoding.EncoderInterface;
-import org.common.encoding.GapEncoder;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;

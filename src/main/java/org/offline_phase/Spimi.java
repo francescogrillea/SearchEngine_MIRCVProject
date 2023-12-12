@@ -103,6 +103,7 @@ public class Spimi {
         logger.info("Intermediate Lexicons merged!");
         //System.out.println(merged_lexicon);
 
+
         // merge all intermediate DocIndex to create a unique one
         File docindex_directory = new File(ChunkHandler.basename_intermediate_docindex);
         File[] docindex_files = docindex_directory.listFiles();
@@ -128,7 +129,6 @@ public class Spimi {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
 
         // merge all intermediate indexes
@@ -187,10 +187,10 @@ public class Spimi {
         Lexicon lexicon = ChunkHandler.readLexicon("data/lexicon.bin");
         System.out.println(lexicon.getLexicon().size());
 
-//        TermEntryList termEntries = lexicon.get("project");
-//        PostingList postingList = ChunkHandler.readPostingList(termEntries.getTermEntryList().get(0), false);
-//        System.out.println(postingList);
-//
+        TermEntryList termEntries = lexicon.get("project");
+        PostingList postingList = ChunkHandler.readPostingList(termEntries.getTermEntryList().get(0), false);
+        System.out.println(postingList);
+
 //        DocIndex docIndex = ChunkHandler.readDocIndex("data/doc_index.bin");
 //        System.out.println(docIndex);
     }

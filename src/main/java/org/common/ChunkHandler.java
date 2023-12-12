@@ -1,8 +1,6 @@
 package org.common;
 
 import org.common.encoding.EncoderInterface;
-import org.common.encoding.GapEncoder;
-import org.common.encoding.VBEncoder;
 import org.offline_phase.Spimi;
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -46,13 +44,11 @@ public class ChunkHandler {
         long blockStartPosition;
 
         startPosition = indexFileChannel.position();
-        GapEncoder gap_encoder= new GapEncoder();
 
         if(!intermediate){
             int i = 0;
             /*
                 TODO - add postingList.generateSkipping() here or back ?
-                    -> if here, be careful to the GAP
              */
             for (SkippingPointer pointer : postingList.getSkipping_points()) {
 
@@ -65,7 +61,6 @@ public class ChunkHandler {
                 blockStartPosition = indexFileChannel.position();
                 while (i < postingList.getSize() && pointer.getMax_doc_id() >= postingList.getPosting(i).getDoc_id()) {
                     Posting posting = postingList.getPostingList().get(i);
-                    posting.setDoc_id(gap_encoder.encode(posting.getDoc_id()));
                     indexFileChannel.write(posting.serialize(encoder));
                     i++;
                 }
@@ -74,7 +69,6 @@ public class ChunkHandler {
             }
         }else{
             for(Posting posting : postingList){
-                posting.setDoc_id(gap_encoder.encode(posting.getDoc_id()));
                 indexFileChannel.write(posting.serialize(encoder));
             }
         }

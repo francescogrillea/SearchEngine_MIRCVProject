@@ -1,7 +1,6 @@
 package org.common;
 
 import org.common.encoding.EncoderInterface;
-import org.common.encoding.GapEncoder;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -34,8 +33,6 @@ public class PostingList implements Iterable<Posting>{
         int doc_id;
         SkippingPointer pointer = null;
 
-        GapEncoder gap_encoder = new GapEncoder();
-
         while (buffer.hasRemaining()){
 
             if(pointers){
@@ -47,7 +44,7 @@ public class PostingList implements Iterable<Posting>{
 
             do{
                 tf = buffer.get();  // return 1 byte
-                doc_id = gap_encoder.decode(encoder.decode(buffer));
+                doc_id = encoder.decode(buffer);
 
                 this.postingList.add(new Posting(doc_id, tf));
             }while (pointers && pointer.getMax_doc_id() > doc_id);

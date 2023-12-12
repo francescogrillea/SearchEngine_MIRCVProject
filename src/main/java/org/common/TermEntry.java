@@ -1,6 +1,5 @@
 package org.common;
 
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 
 public class TermEntry {

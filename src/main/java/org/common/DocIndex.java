@@ -1,15 +1,8 @@
 package org.common;
 
-import org.common.encoding.EncoderInterface;
-import org.common.encoding.GapEncoder;
-
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public class DocIndex {
 

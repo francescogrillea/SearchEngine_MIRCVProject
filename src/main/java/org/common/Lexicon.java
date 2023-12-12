@@ -1,14 +1,13 @@
 package org.common;
 
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class Lexicon implements LexiconInterface {
 
-    private HashMap<String, TermEntryList> lexicon;
-    private transient int size = 0; // TODO - remove transient
+    private final HashMap<String, TermEntryList> lexicon;
+    private int size = 0;
 
     public Lexicon() {
         this.lexicon = new HashMap<>();
