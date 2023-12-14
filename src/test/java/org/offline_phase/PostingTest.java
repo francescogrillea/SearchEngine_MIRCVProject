@@ -95,6 +95,9 @@ public class PostingTest {
         while(b.hasRemaining()){
             System.out.println(b.get()); //-1 -65 -1 -5 127 //TODO sistemare usando assertequals
         }
+        b.flip();
+        System.out.println(p.decodeList(b));
     }
+
 
 }

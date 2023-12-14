@@ -1,6 +1,7 @@
 package org.common.encoding;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UnaryEncoder implements EncoderInterface{
@@ -74,7 +75,32 @@ public class UnaryEncoder implements EncoderInterface{
 
     @Override
     public List<Integer> decodeList(ByteBuffer encodedBytes) {
-        return null;
+        List<Integer> decompressedList =new ArrayList<>();
+        int onesCounter = 0;
+
+        while(encodedBytes.hasRemaining()) {
+            byte b = encodedBytes.get();
+            for (int i = 7; i >= 0; i--) {
+                // check if the i-th bit is set to 1 or 0
+                if (((b >> i) & 1) == 0) {
+                    // i-th bit is set to 0
+
+                    // writing the decompressed number in the array of the results
+                    decompressedList.add((onesCounter+1));
+
+                    // resetting the counter of ones for next integer
+                    onesCounter = 0;
+
+                } else {
+                    // i-th bit is set to 1
+
+                    // increment the counter of ones
+                    onesCounter++;
+                }
+            }
+        }
+
+        return decompressedList;
     }
 
     @Override
