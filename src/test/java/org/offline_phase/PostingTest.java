@@ -3,6 +3,7 @@ package org.offline_phase;
 import junit.framework.TestCase;
 import org.common.Posting;
 import org.common.PostingList;
+import org.common.encoding.UnaryEncoder;
 import org.common.encoding.VBEncoder;
 import org.junit.Test;
 
@@ -86,8 +87,8 @@ public class PostingTest {
         numeri.add(100); //-28 //TODO sistemare usando assertequals
         numeri.add(2000000); //122 9 -128
         numeri.add(3); //-125
-        PostingList p = new PostingList();
-        ByteBuffer b = p.serializeBlockVB(numeri);
+        VBEncoder p = new VBEncoder();
+        ByteBuffer b = p.encodeList(numeri);
         while(b.hasRemaining()){
             System.out.println(b.get());
         }
@@ -95,12 +96,12 @@ public class PostingTest {
 
     @Test
     public void UnaryEncoderTest(){
-        List<Short> numeri= new ArrayList<>();
-        numeri.add((short)10);
-        numeri.add((short)20);
-        numeri.add((short)3);
-        PostingList p = new PostingList();
-        ByteBuffer b = p.serializeBlockUnary(numeri);
+        List<Integer> numeri= new ArrayList<>();
+        numeri.add(10);
+        numeri.add(20);
+        numeri.add(3);
+        UnaryEncoder p = new UnaryEncoder();
+        ByteBuffer b = p.encodeList(numeri);
         while(b.hasRemaining()){
             System.out.println(b.get()); //-1 -65 -1 -5 127 //TODO sistemare usando assertequals
         }
@@ -109,61 +110,6 @@ public class PostingTest {
 }
 
 
-// DECOMPRESSIONE vbe:
-//public int decode(ByteBuffer buffer) {
-//
-//    byte[] encodedBytes;
-//
-//    // save the beginning of the doc_id
-//    int position_tmp = buffer.position();
-//
-//    // how many bytes are for doc_id
-//    int i = 0;
-//    while((buffer.get()) >= 0)
-//        i++;
-//    encodedBytes = new byte[i + 1];
-//
-//    // return to where the doc_id starts
-//    buffer.position(position_tmp);
-//    buffer.get(encodedBytes);
-//
-//    int n = 0;
-//    for (byte b : encodedBytes) {
-//        if ((b & 0xff) < 128) {
-//            n = 128 * n + b;
-//        } else {
-//            return (128 * n + ((b - 128) & 0xff));
-//        }
-//    }
-//    return -1;
-//}
 
-//DECOMPRESSIONE UNARY:
 
-//    public static List<Short> integerArrayDecompression(byte[] toBeDecompressed) {
-//        List<Short> decompressedArray=new ArrayList<>();
-//        int onesCounter = 0;
-//
-//        for (byte b : toBeDecompressed) {
-//            for (int i = 7; i >= 0; i--) {
-//                // check if the i-th bit is set to 1 or 0
-//                if (((b >> i) & 1) == 0) {
-//                    // i-th bit is set to 0
-//
-//                    // writing the decompressed number in the array of the results
-//                    decompressedArray.add((short)(onesCounter+1));
-//
-//                    // resetting the counter of ones for next integer
-//                    onesCounter = 0;
-//
-//                } else {
-//                    // i-th bit is set to 1
-//
-//                    // increment the counter of ones
-//                    onesCounter++;
-//                }
-//            }
-//        }
-//
-//        return decompressedArray;
-//    }
+
