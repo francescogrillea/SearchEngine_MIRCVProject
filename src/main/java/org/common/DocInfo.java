@@ -17,7 +17,7 @@ public class DocInfo {
         return pid;
     }
 
-    public long getLength() {
+    public int getLength() {
         return length;
     }
 

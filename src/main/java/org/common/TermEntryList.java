@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class TermEntryList implements Iterable<TermEntry>{        // TODO - should implement TermEntryInterface ?
-    private int term_index; // TODO - togliere transient
+    private int term_index;
     private List<TermEntry> termEntryList;
 
     public TermEntryList(int term_index) {

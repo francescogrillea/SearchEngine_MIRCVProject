@@ -3,108 +3,165 @@ package org.common;
 import org.common.encoding.EncoderInterface;
 
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static java.lang.Math.log;
-
-public class PostingList implements Iterable<Posting>{
-    private final List<Posting> postingList;
+public class PostingList {
+    private final List<Integer> doc_ids;
+    private final List<Integer> term_frequencies;
     private final List<SkippingPointer> skipping_points;
-    private int size;
+
+    private int block_size;
 
     public PostingList() {
-        this.postingList = new ArrayList<Posting>();
+        this.doc_ids = new ArrayList<>();
+        this.term_frequencies = new ArrayList<>();
         this.skipping_points = new ArrayList<>();
-        this.size = 0;
     }
 
-    public PostingList(Posting posting){
-        this.postingList = new ArrayList<>();
+    public PostingList(int doc_id){
+        this.doc_ids = new ArrayList<>();
+        this.term_frequencies = new ArrayList<>();
         this.skipping_points = new ArrayList<>();
-        this.postingList.add(posting);
-        this.size = 1;
+
+        addPosting(doc_id);
     }
 
-    public PostingList(ByteBuffer buffer, EncoderInterface encoder, boolean pointers){
-        this.postingList = new ArrayList<>();
+    public PostingList(ByteBuffer buffer){
+        /*
+            TODO - per renderla generica sia nelle intermediate che in quella normale,
+                fare un check
+                    if lists are null -> instatiate
+                tanto devo comunque appendere blocco dopo blocco
+         */
+        this.doc_ids = new ArrayList<>();
+        this.term_frequencies = new ArrayList<>();
         this.skipping_points = new ArrayList<>();
 
-        byte tf;
-        int doc_id;
-        SkippingPointer pointer = null;
-
-        while (buffer.hasRemaining()){
-
-            if(pointers){
-                int max_doc_id = buffer.getInt();
-                short offset = buffer.getShort();
-                pointer = new SkippingPointer(max_doc_id, offset);
-                this.skipping_points.add(pointer);
-            }
-
-            do{
-                tf = buffer.get();  // return 1 byte
-                doc_id = encoder.decode(buffer);
-
-                this.postingList.add(new Posting(doc_id, tf));
-            }while (pointers && pointer.getMax_doc_id() > doc_id);
-
+        int value;
+        while((value = buffer.getInt()) > 0){
+            this.doc_ids.add(value);
         }
-        this.size = this.postingList.size();
+
+        while(buffer.hasRemaining()){
+            this.term_frequencies.add(buffer.getInt());
+        }
+
     }
 
-    public void addPosting(Posting posting){
-        int index = postingList.indexOf(posting);
+    public PostingList(ByteBuffer buffer, EncoderInterface decoder_docID, EncoderInterface decoder_TFs){
+
+        this.doc_ids = new ArrayList<>();
+        this.term_frequencies = new ArrayList<>();
+        this.skipping_points = new ArrayList<>();
+
+        SkippingPointer current_pointer;
+        ByteBuffer doc_ids;
+        ByteBuffer tfs;
+        while(buffer.hasRemaining()){
+            current_pointer = new SkippingPointer(buffer);
+            skipping_points.add(current_pointer);
+
+            doc_ids = ByteBuffer.allocate(current_pointer.getBlock_length_docIDs());
+            buffer.get(doc_ids.array());
+            this.doc_ids.addAll(decoder_docID.decodeList(doc_ids));
+
+            // read termFreqs of one block
+            tfs =  ByteBuffer.allocate(current_pointer.getBlock_length_TFs());
+            buffer.get(tfs.array());
+            this.term_frequencies.addAll(decoder_TFs.decodeList(tfs));
+        }
+    }
+
+    public void addPosting(int doc_id){
+        int index = this.doc_ids.indexOf(doc_id);
         if (index == -1){
-            postingList.add(posting);
-            this.size++;
+            this.doc_ids.add(doc_id);
+            this.term_frequencies.add(1);
+        }else{
+            this.term_frequencies.set(index, (this.term_frequencies.get(index) + 1));
         }
-        else
-            postingList.get(index).increaseTF();
     }
 
     public void appendPostings(PostingList new_postings){
-        this.postingList.addAll(new_postings.getPostingList());
-        this.size += new_postings.getSize();
+        this.doc_ids.addAll(new_postings.getDoc_ids());
+        this.term_frequencies.addAll(new_postings.getTerm_frequencies());
     }
 
-    public void generatePointers(){
-        int block_size = (int) Math.ceil(Math.sqrt(this.size));
+    public ByteBuffer serialize(){
+        int size = (this.doc_ids.size() * Integer.BYTES) + Integer.BYTES + (this.term_frequencies.size() * Integer.BYTES);
+        ByteBuffer buffer = ByteBuffer.allocate(size);
 
-        for (int i = block_size ; i < this.size; i = i+block_size){
-            this.skipping_points.add(new SkippingPointer(this.postingList.get(i - 1).getDoc_id()));
+        // write DocIDs
+        for(Integer i : this.doc_ids)
+            buffer.putInt(i);
+
+        // separator char
+        buffer.putInt(-1);
+
+        // write TermFreqs
+        for(Integer i : this.term_frequencies)
+            buffer.putInt(i);
+
+        buffer.flip();
+        return buffer;
+    }
+
+    public ByteBuffer serializeDocIDsBlock(EncoderInterface encoder, int start_index, int end_index) {
+
+        List<Integer> doc_id_BlockSubset = this.doc_ids.subList(start_index, end_index);
+        ByteBuffer buffer = encoder.encodeList(doc_id_BlockSubset);
+
+        buffer.flip();
+        return buffer;
+    }
+
+    public ByteBuffer serializeTFsBlock(EncoderInterface encoder, int start_index, int end_index){
+
+        List<Integer> termFreqs_BlockSubset = this.term_frequencies.subList(start_index, end_index);
+        ByteBuffer buffer = encoder.encodeList(termFreqs_BlockSubset);
+
+        buffer.flip();
+        return buffer;
+    }
+
+
+
+    public void initPointers(){
+        this.block_size = (int) Math.ceil(Math.sqrt(this.doc_ids.size()));
+
+        for (int i = block_size; i < this.doc_ids.size(); i = i+block_size){
+            this.skipping_points.add(new SkippingPointer(this.doc_ids.get(i - 1)));
         }
-        this.skipping_points.add(new SkippingPointer(this.postingList.get(this.size - 1).getDoc_id()));
+        this.skipping_points.add(new SkippingPointer(this.doc_ids.get(this.doc_ids.size() - 1)));
     }
 
-    public int getSize(){
-        return this.size;
+    public List<Integer> getDoc_ids() {
+        return doc_ids;
     }
 
-    public List<Posting> getPostingList() {
-        return postingList;
+    public List<Integer> getTerm_frequencies() {
+        return term_frequencies;
     }
 
     public List<SkippingPointer> getSkipping_points() {
         return skipping_points;
     }
 
-    public Posting getPosting(int i){
-        return this.postingList.get(i);
-    }
-
-    @Override
-    public Iterator<Posting> iterator() {
-        return this.postingList.iterator();
+    public int getBlock_size() {
+        return block_size;
     }
 
     @Override
     public String toString() {
         return "PostingList{" +
-                "postingList=" + postingList +
+                "doc_ids=" + doc_ids +
+                ", term_frequencies=" + term_frequencies +
                 ", skipping_points=" + skipping_points +
                 '}';
     }
+
+
 }

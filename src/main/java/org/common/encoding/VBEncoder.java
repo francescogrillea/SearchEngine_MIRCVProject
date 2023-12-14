@@ -43,7 +43,7 @@ public class VBEncoder implements EncoderInterface {
     }
 
     @Override
-    public List<Integer> decodeList(ByteBuffer encodedBytes){
+    public List<Integer> decodeList(ByteBuffer encodedBytes) {
         return null;
     }
 

@@ -4,21 +4,13 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.common.*;
 import org.common.encoding.NoEncoder;
+import org.common.encoding.UnaryEncoder;
 import org.common.encoding.VBEncoder;
-
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.Path;
-
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -28,9 +20,8 @@ public class Spimi {
 
     private int doc_id_counter = 0;
     private int block_id_counter = 0;
-    static final int  CHUNK_SIZE = 10000;
+    static final int  CHUNK_SIZE = 20000;
     private final int _DEBUG_N_DOCS = Integer.MAX_VALUE;    // n of documents we want to analyze
-
     static Logger logger = Logger.getLogger(Spimi.class.getName());
     private final boolean process_data_flag;
 
@@ -38,14 +29,16 @@ public class Spimi {
     public Spimi(boolean process_data_flag, boolean compress_data_flag) {
         this.process_data_flag = process_data_flag;
         if(compress_data_flag)
-            ChunkHandler.setEncoder(new VBEncoder());
+            ChunkHandler.setEncoder(new VBEncoder(), new VBEncoder());
+            //ChunkHandler.setEncoder(new VBEncoder(), new UnaryEncoder());
         else
-            ChunkHandler.setEncoder(new NoEncoder());
+            ChunkHandler.setEncoder(new NoEncoder(), new NoEncoder());
+
     }
 
     public void run(String collection_filepath){
 
-        ExecutorService threadpool = Executors.newFixedThreadPool(10);  // TODO - provare con 10 thread alla volta
+        ExecutorService threadpool = Executors.newFixedThreadPool(10);
 
         try(FileInputStream inputStream = new FileInputStream(collection_filepath);
             BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
@@ -95,18 +88,19 @@ public class Spimi {
 
         File[] lexicon_files = lexicon_directory.listFiles();   // TODO - assert is != null
 
+        long start_time = System.currentTimeMillis();
         // merge all intermediate lexicon to create a unique one
         for (File lexiconFile : lexicon_files) {
             current_lexicon = ChunkHandler.readLexicon(ChunkHandler.basename_intermediate_lexicon + lexiconFile.getName());
             merged_lexicon.merge(current_lexicon);
         }
-        logger.info("Intermediate Lexicons merged!");
-        //System.out.println(merged_lexicon);
+        logger.info("Intermediate Lexicons merged in " + (System.currentTimeMillis() - start_time)/1000.0 + "s");
 
 
         // merge all intermediate DocIndex to create a unique one
         File docindex_directory = new File(ChunkHandler.basename_intermediate_docindex);
         File[] docindex_files = docindex_directory.listFiles();
+        start_time = System.currentTimeMillis();
         try (FileOutputStream indexFileOutputStream = new FileOutputStream(ChunkHandler.basename + "doc_index.bin", false);
              FileChannel docIndexFileChannel = indexFileOutputStream.getChannel()) {
 
@@ -129,9 +123,11 @@ public class Spimi {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        logger.info("Intermediate DocIndex merged in " + (System.currentTimeMillis() - start_time)/1000.0 + "s");
 
 
         // merge all intermediate indexes
+        start_time = System.currentTimeMillis();
         try (FileOutputStream indexFileOutputStream = new FileOutputStream("data/index.bin", false);
              FileChannel indexFileChannel = indexFileOutputStream.getChannel()) {
 
@@ -158,12 +154,11 @@ public class Spimi {
 
                 postingList = new PostingList();
                 for(TermEntry termEntry : termEntryList){
-                    PostingList p = ChunkHandler.readPostingList(fileChannels.get(termEntry.getBlock_index()), termEntry, true);
+                    PostingList p = ChunkHandler.readIntermediatePostingList(fileChannels.get(termEntry.getBlock_index()), termEntry);
                     postingList.appendPostings(p);
                 }
-                postingList.generatePointers();
-                //System.out.println("Term: " + term + "\t -> " + postingList);
-                finalTermEntry = ChunkHandler.writePostingList(indexFileChannel, postingList, false);
+                postingList.initPointers();
+                finalTermEntry = ChunkHandler.writePostingList(indexFileChannel, postingList);
 
                 merged_lexicon.get(term).resetTermEntry(finalTermEntry);
                 i++;
@@ -173,26 +168,24 @@ public class Spimi {
             for(FileChannel fc : fileChannels)
                 fc.close();
 
-            logger.info("Intermediate Posting Lists merged");
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // System.out.println(merged_lexicon);
+        logger.info("Intermediate Index merged in " + (System.currentTimeMillis() - start_time)/1000.0 + "s");
 
         ChunkHandler.writeLexicon(merged_lexicon, ChunkHandler.basename + "lexicon.bin", false);
     }
 
     public void debug_fun(){
+        DocIndex docIndex = ChunkHandler.readDocIndex("data/doc_index.bin");
+        //System.out.println(docIndex);
+
         Lexicon lexicon = ChunkHandler.readLexicon("data/lexicon.bin");
-        System.out.println(lexicon.getLexicon().size());
 
-        TermEntryList termEntries = lexicon.get("project");
-        PostingList postingList = ChunkHandler.readPostingList(termEntries.getTermEntryList().get(0), false);
+        TermEntryList termEntries = lexicon.get("manhattan");
+        PostingList postingList = ChunkHandler.readPostingList(termEntries.getTermEntryList().get(0));
         System.out.println(postingList);
-
-//        DocIndex docIndex = ChunkHandler.readDocIndex("data/doc_index.bin");
-//        System.out.println(docIndex);
     }
 
 }

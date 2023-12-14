@@ -5,6 +5,7 @@ import org.offline_phase.ContentParser;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.List;
 import org.common.ChunkHandler;
 
@@ -27,7 +28,7 @@ public class ProcessChunkThread implements Runnable{
 
         logger.info("Block " + this.block_index + " has stated to be processed");
 
-        InvertedIndex intermediateIndex = new InvertedIndex();
+        ArrayList<PostingList> intermediateIndex = new ArrayList<>();
         Lexicon intermediateLexicon = new Lexicon();
         DocIndex intemediateDocIndex = new DocIndex();
 
@@ -46,13 +47,17 @@ public class ProcessChunkThread implements Runnable{
                 List<String> terms = parser.processContent(fields[1]);
 
                 // add the doc_id to DocIndex
-                intemediateDocIndex.add(doc_id_counter, new DocInfo(Integer.parseInt(fields[0]), terms.size())); // TODO - la docIndex prende i termini prima o dopo il processing? -> stopword removal
+                intemediateDocIndex.add(doc_id_counter, new DocInfo(Integer.parseInt(fields[0]), terms.size()));
 
                 for(String term : terms){
                     // add term to intermediate Lexicon
                     index = intermediateLexicon.add(term);
+
                     // add term's posting list to intermediate Index
-                    intermediateIndex.addPosting(index, new Posting(doc_id_counter));
+                    if(index < intermediateIndex.size())
+                        intermediateIndex.get(index).addPosting(doc_id_counter);
+                    else
+                        intermediateIndex.add(index, new PostingList(doc_id_counter));
                 }
             }
         }
@@ -69,7 +74,8 @@ public class ProcessChunkThread implements Runnable{
             TermEntry termEntry;
             for(String term : intermediateLexicon.keySet()){
                 int posting_index = intermediateLexicon.get(term).getTerm_index();
-                termEntry = ChunkHandler.writePostingList(indexFileChannel, intermediateIndex.getInverted_index().get(posting_index), true);
+                //termEntry = ChunkHandler.writePostingList(indexFileChannel, intermediateIndex.get(posting_index), true);
+                termEntry = ChunkHandler.writeIntermediatePostingList(indexFileChannel, intermediateIndex.get(posting_index));
                 termEntry.setBlock_index(this.block_index);
                 intermediateLexicon.get(term).addTermEntry(termEntry);
             }
@@ -80,7 +86,6 @@ public class ProcessChunkThread implements Runnable{
 
         ChunkHandler.writeLexicon(intermediateLexicon, lexicon_filename, true);
         ChunkHandler.writeDocIndex(intemediateDocIndex, docindex_filename);
-
     }
 
 }

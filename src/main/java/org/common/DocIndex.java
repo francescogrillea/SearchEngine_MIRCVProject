@@ -1,11 +1,12 @@
 package org.common;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class DocIndex {
 
+    // TODO - valuatre se fare una lista ordinata
     private final HashMap<Integer, DocInfo> docIndex;
 
     public DocIndex() {
@@ -32,13 +33,12 @@ public class DocIndex {
     }
 
     public ByteBuffer serialize(){
-        // TODO - add encoder
         int size = this.docIndex.size();
-        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES * size + DocInfo.BYTES * size);
+        ByteBuffer buffer = ByteBuffer.allocate(size * (Integer.BYTES + DocInfo.BYTES));
 
-        for (Map.Entry<Integer, DocInfo> entry : this.docIndex.entrySet()){
-            buffer.putInt(entry.getKey());
-            buffer.put(entry.getValue().serialize());
+        for(int doc_id = 1; doc_id <= size; doc_id++){
+            buffer.putInt(doc_id);
+            buffer.put(this.docIndex.get(doc_id).serialize());
         }
 
         buffer.flip();

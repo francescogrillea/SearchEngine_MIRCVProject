@@ -14,10 +14,12 @@ public class ChunkHandler {
     public static final String basename_intermediate_lexicon = "data/intermediate_postings/lexicon/";
     public static final String basename_intermediate_docindex = "data/intermediate_postings/doc_index/";
     static Logger logger = Logger.getLogger(Spimi.class.getName());
-    private static EncoderInterface encoder;
+    private static EncoderInterface encoderDocID;
+    private static EncoderInterface encoderTermFreqs;
 
-    public static void setEncoder(EncoderInterface e){
-        encoder = e;
+    public static void setEncoder(EncoderInterface e_docID, EncoderInterface e_tf){
+        encoderDocID = e_docID;
+        encoderTermFreqs = e_tf;
     }
 
     public static void writeLexicon(Lexicon lexicon, String lexicon_filename, boolean intermediate){
@@ -34,51 +36,6 @@ public class ChunkHandler {
         logger.info("Lexicon " + lexicon_filename + " written on disk");
     }
 
-    public static TermEntry writePostingList(FileChannel indexFileChannel, PostingList postingList, boolean intermediate) throws IOException {
-
-        // to save the starting position
-        long startPosition;
-        long length;
-
-        long pointerFilePosition;
-        long blockStartPosition;
-
-        startPosition = indexFileChannel.position();
-
-        if(!intermediate){
-            int i = 0;
-            /*
-                TODO - add postingList.generateSkipping() here or back ?
-             */
-            for (SkippingPointer pointer : postingList.getSkipping_points()) {
-
-                // where the skipping pointer must be written
-                pointerFilePosition = indexFileChannel.position();
-
-                // reserve the space for the Skipping Pointer
-                indexFileChannel.position(pointerFilePosition + SkippingPointer.SIZE);
-
-                blockStartPosition = indexFileChannel.position();
-                while (i < postingList.getSize() && pointer.getMax_doc_id() >= postingList.getPosting(i).getDoc_id()) {
-                    Posting posting = postingList.getPostingList().get(i);
-                    indexFileChannel.write(posting.serialize(encoder));
-                    i++;
-                }
-                pointer.setOffset((short) (indexFileChannel.position() - blockStartPosition));
-                indexFileChannel.write(pointer.serialize(), pointerFilePosition);
-            }
-        }else{
-            for(Posting posting : postingList){
-                indexFileChannel.write(posting.serialize(encoder));
-            }
-        }
-        length = indexFileChannel.position() - startPosition;
-
-        //System.out.println(postingList);
-        return new TermEntry(-1, startPosition, length);
-    }
-
-
     public static Lexicon readLexicon(String lexicon_filename){
 
         Lexicon lexicon = null;
@@ -94,18 +51,13 @@ public class ChunkHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info("Block " + lexicon_filename + " has been read from disk");
         return lexicon;
     }
 
-    public static PostingList readPostingList(TermEntry termEntry, boolean intermediate){
+    public static PostingList readPostingList(TermEntry termEntry){
 
-        // infer filename
-        String index_filename;
-        if(intermediate)
-             index_filename = String.format(basename_intermediate_index + "block_index_%05d.bin", termEntry.getBlock_index());
-        else
-            index_filename = basename + "index.bin";
+        String index_filename = basename + "index.bin";
+        PostingList postingList = null;
 
         try (FileInputStream indexFileInputStream = new FileInputStream(index_filename);
              FileChannel indexFileChannel = indexFileInputStream.getChannel()) {
@@ -116,21 +68,100 @@ public class ChunkHandler {
             indexFileChannel.read(indexByteBuffer);
             indexByteBuffer.flip();
 
-            return new PostingList(indexByteBuffer, encoder, !intermediate);
+            postingList = new PostingList(indexByteBuffer, encoderDocID, encoderTermFreqs);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return postingList;
     }
 
-    public static PostingList readPostingList(FileChannel channel, TermEntry termEntry, boolean intermediate) throws IOException {
+    public static TermEntry writePostingList(FileChannel indexFileChannel, PostingList postingList) throws IOException {
 
+        long start_PostingList_position = indexFileChannel.position();
+        long pointerFilePosition;
+        long docIDs_blockStartPosition;
+        long termFreqs_blockStartPosition;
+
+        int start_index_block = 0;
+        int end_index_block;
+        // for each block (subset of the posting list) identified by the skipping pointer
+        for (SkippingPointer pointer : postingList.getSkipping_points()) {
+
+            pointerFilePosition = indexFileChannel.position();  // save where the Skipping Pointer should be stored
+            end_index_block = Math.min(start_index_block + postingList.getBlock_size(), postingList.getDoc_ids().size());
+
+            indexFileChannel.position(pointerFilePosition + SkippingPointer.SIZE);  // move the position of the docIDs list
+            docIDs_blockStartPosition = indexFileChannel.position();    // save where the docIDs list starts
+            indexFileChannel.write(postingList.serializeDocIDsBlock(encoderDocID, start_index_block, end_index_block));  // write the docIDs list
+
+            // update the skipping pointer passing the length of the docIDs list (in bytes)
+            pointer.setBlock_length_docIDs((short) (indexFileChannel.position() - docIDs_blockStartPosition));
+
+
+            termFreqs_blockStartPosition = indexFileChannel.position(); // save where the TermFreqs starts
+            indexFileChannel.write(postingList.serializeTFsBlock(encoderTermFreqs, start_index_block, end_index_block)); // write the termFreqs list
+
+            // update the skipping pointer passing the length of the termFreqs list (in bytes)
+            pointer.setBlock_length_TFs((short) (indexFileChannel.position() - termFreqs_blockStartPosition));
+
+            // finally write the skipping pointer
+            indexFileChannel.write(pointer.serialize(), pointerFilePosition);
+
+            start_index_block = end_index_block;
+
+        }
+        return new TermEntry(-1, start_PostingList_position, indexFileChannel.position() - start_PostingList_position, postingList.getDoc_ids().size());
+    }
+
+    public static TermEntry writeIntermediatePostingList(FileChannel indexFileChannel, PostingList postingList) throws IOException {
+        long startPosition = indexFileChannel.position();
+        indexFileChannel.write(postingList.serialize());
+        long length = indexFileChannel.position() - startPosition;
+
+        return new TermEntry(-1, startPosition, length, 0);
+    }
+
+    /*
+        TODO - due metodi molto simili, valutare se conviene sempre passare il file channel dall'esterno
+            considerando che a tempo di esecuzione devo leggermi un solo file, tanto vale tenere il file channel sempre aperto
+     */
+    public static PostingList readIntermediatePostingList(TermEntry termEntry){
+
+        String index_filename = String.format(basename_intermediate_index + "block_index_%05d.bin", termEntry.getBlock_index());
+        PostingList postingList = null;
+
+        try (FileInputStream indexFileInputStream = new FileInputStream(index_filename);
+             FileChannel indexFileChannel = indexFileInputStream.getChannel()) {
+
+            // Read bytes into ByteBuffer
+            ByteBuffer indexByteBuffer = ByteBuffer.allocate((int) termEntry.getLength());
+            indexFileChannel.position(termEntry.getOffset());
+            indexFileChannel.read(indexByteBuffer);
+            indexByteBuffer.flip();
+
+            postingList = new PostingList(indexByteBuffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return postingList;
+    }
+
+    public static PostingList readIntermediatePostingList(FileChannel indexFileChannel, TermEntry termEntry){
+
+        PostingList postingList = null;
+
+        // Read bytes into ByteBuffer
         ByteBuffer indexByteBuffer = ByteBuffer.allocate((int) termEntry.getLength());
-        channel.position(termEntry.getOffset());
-        channel.read(indexByteBuffer);
-        indexByteBuffer.flip();
+        try {
+            indexFileChannel.position(termEntry.getOffset());
+            indexFileChannel.read(indexByteBuffer);
+            indexByteBuffer.flip();
+            postingList = new PostingList(indexByteBuffer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        return new PostingList(indexByteBuffer, encoder, !intermediate);
+        return postingList;
     }
 
 
@@ -145,8 +176,6 @@ public class ChunkHandler {
             e.printStackTrace();
         }
         logger.info("Lexicon " + doc_index_filename + " written on disk");
-
-
     }
 
     public static DocIndex readDocIndex(String doc_index_filename){
@@ -166,7 +195,6 @@ public class ChunkHandler {
                 e.printStackTrace();
         }
 
-        logger.info("Block " + doc_index_filename + " has been read from disk");
         return doc_index;
     }
 

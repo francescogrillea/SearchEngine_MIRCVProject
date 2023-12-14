@@ -27,11 +27,10 @@ public class Lexicon implements LexiconInterface {
             word = new byte[word_length];
             buffer.get(word);
             // read the term entry
-            i = new TermEntry(buffer.getInt(), buffer.getLong(), buffer.getLong());
+            i = new TermEntry(buffer.getInt(), buffer.getLong(), buffer.getLong(), buffer.getInt());
 
             this.lexicon.put(new String(word, StandardCharsets.UTF_8), new TermEntryList(i));
         }
-        //System.out.println("Lexicon read: " + lexicon);
     }
 
     @Override
