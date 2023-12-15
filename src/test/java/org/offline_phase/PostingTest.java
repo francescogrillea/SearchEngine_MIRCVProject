@@ -82,6 +82,9 @@ public class PostingTest {
         while(b.hasRemaining()){
             System.out.println(b.get());
         }
+        b.flip();
+        System.out.println(p.decodeList(b));
+
     }
 
     @Test

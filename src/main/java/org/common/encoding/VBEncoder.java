@@ -3,6 +3,7 @@ package org.common.encoding;
 import org.common.encoding.EncoderInterface;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.Math.log;
@@ -44,7 +45,25 @@ public class VBEncoder implements EncoderInterface {
 
     @Override
     public List<Integer> decodeList(ByteBuffer encodedBytes) {
-        return null;
+        List<Integer> decodedList= new ArrayList<>();
+        List<Byte> decodedNumberList= new ArrayList<>();
+
+        while(encodedBytes.hasRemaining()){
+            byte byteLetto = encodedBytes.get();
+            decodedNumberList.add(byteLetto);
+            if(byteLetto<0){
+                int n = 0;
+                for (byte b : decodedNumberList) {
+                    if ((b & 0xff) < 128) {
+                        n = 128 * n + b;
+                    } else {
+                        decodedList.add(128 * n + ((b - 128) & 0xff));
+                    }
+                }
+                decodedNumberList.clear();
+            }
+        }
+        return decodedList;
     }
 
     @Override
@@ -57,7 +76,7 @@ public class VBEncoder implements EncoderInterface {
 
         // how many bytes are for doc_id
         int i = 0;
-        while((buffer.get()) >= 0)
+        while((buffer.get()) >= 0) //perchè quello con - è l'ultimo visto che inizia per 1. molto bene
             i++;
         encodedBytes = new byte[i + 1];
 
