@@ -183,23 +183,17 @@ public class Spimi {
 
         Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
 
-        TermEntryList termEntries = lexicon.get("manhattan");
+        String term = "manhattan";
+        TermEntryList termEntries = lexicon.get(term);
         PostingList postingList = PostingListReader.readPostingList(termEntries.getTermEntryList().get(0));
         System.out.println(postingList);
-        int i = 1181;
-        System.out.println("DocID: " + postingList.getDocId(i) + "\t" + "TermFreq: " + postingList.getTermFrequency(i));
 
-        String index_filename = "data/index.bin";
+        try(PostingListBlockReader reader = new PostingListBlockReader(termEntries.getTermEntryList().get(0), term)){
 
-        try (FileInputStream indexFileInputStream = new FileInputStream(index_filename);
-             FileChannel indexFileChannel = indexFileInputStream.getChannel()) {
-
-            // move to the posting list of the term
-            indexFileChannel.position(termEntries.getTermEntryList().get(0).getOffset());
-
-            int tf = PostingListReader.nextGEQ(indexFileChannel, 2076132);
+            int tf = reader.nextGEQ(88413677);
             System.out.println(tf);
-        } catch (IOException e) {
+
+        }catch (IOException e){
             e.printStackTrace();
         }
     }

@@ -152,7 +152,7 @@ public class Scoring {
 
 
     public void getDocLenght(String doc_index_filename) {
-        DocIndex doc_index = ChunkHandler.readDocIndex(doc_index_filename);
+        DocIndex doc_index = DocIndexReader.readDocIndex(doc_index_filename);
         for(int i = 0; i < this.N; i++){
             DocInfo doc_info = doc_index.get(i);
             dl.add(doc_info.getLength());

@@ -34,6 +34,10 @@ public class TermEntryList implements Iterable<TermEntry>{        // TODO - shou
         return term_index;
     }
 
+    public TermEntry getTermEntry(int index){
+        return this.termEntryList.get(index);
+    }
+
     public List<TermEntry> getTermEntryList() {
         return termEntryList;
     }

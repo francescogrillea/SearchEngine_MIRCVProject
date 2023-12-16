@@ -11,8 +11,10 @@ public class PostingListReader {
 
     public static final String basename = "data/";
     public static final String basename_intermediate_index = "data/intermediate_postings/index/";
-    private static EncoderInterface encoderDocID;
-    private static EncoderInterface encoderTermFreqs;
+    public static final String basename_index = "data/index.bin";
+    protected static EncoderInterface encoderDocID;
+    protected static EncoderInterface encoderTermFreqs;
+
 
     public static void setEncoder(EncoderInterface e_docID, EncoderInterface e_tf){
         encoderDocID = e_docID;
@@ -132,59 +134,6 @@ public class PostingListReader {
         return new TermEntry(-1, start_PostingList_position, indexFileChannel.position() - start_PostingList_position, postingList.getDoc_ids().size());
     }
 
-    private static SkippingPointer readBlockPointer(FileChannel fileChannel) throws IOException{
-        ByteBuffer pointerByteBuffer = ByteBuffer.allocate(SkippingPointer.SIZE);
-        fileChannel.read(pointerByteBuffer);
-        pointerByteBuffer.flip();
-
-        return new SkippingPointer(pointerByteBuffer);
-    }
-
-    public static PostingList readBlockContent(FileChannel fileChannel, SkippingPointer pointer) throws IOException {
-
-        ByteBuffer docIDsByteBuffer = ByteBuffer.allocate(pointer.getBlock_length_docIDs());
-        fileChannel.read(docIDsByteBuffer);
-        docIDsByteBuffer.flip();
-
-        ByteBuffer termFreqsByteBuffer = ByteBuffer.allocate(pointer.getBlock_length_TFs());
-        fileChannel.read(termFreqsByteBuffer);
-        termFreqsByteBuffer.flip();
-
-        return new PostingList(pointer, docIDsByteBuffer, termFreqsByteBuffer, encoderDocID, encoderTermFreqs);
-    }
-
-    public static PostingList readNextBlock(FileChannel fileChannel, SkippingPointer previous_block_pointer) throws IOException {
-
-        long position = fileChannel.position();
-        // move from the previous_block_pointer to the next one
-        fileChannel.position(position + previous_block_pointer.getBlock_length_docIDs() + previous_block_pointer.getBlock_length_docIDs());
-
-        SkippingPointer current_block_pointer = readBlockPointer(fileChannel);
-        return readBlockContent(fileChannel, current_block_pointer);
-    }
-
-    public static Integer nextGEQ(FileChannel fileChannel, int doc_id) throws IOException {
-
-        long position_tmp;
-        SkippingPointer pointer = null;
-
-        // move along pointers until the block has been found
-        boolean found_flag = false;
-        while(!found_flag){
-            pointer = readBlockPointer(fileChannel);
-            if(pointer.getMax_doc_id() < doc_id){
-                position_tmp = fileChannel.position();
-                fileChannel.position(position_tmp +  pointer.getBlock_length_docIDs() + pointer.getBlock_length_docIDs());
-            }
-            else
-                found_flag = true;
-        }
-        
-        PostingList postingList = readBlockContent(fileChannel, pointer);
-        int index = postingList.getDoc_ids().indexOf(doc_id);
-
-        return postingList.getTermFrequency(index);
-    }
 
 
 

@@ -1,89 +1,86 @@
 package org.online_phase;
 
-import opennlp.tools.cmdline.chunker.ChunkerModelLoader;
 import org.common.*;
 import org.common.Scoring;
-
-import java.io.FileInputStream;
-import java.nio.channels.FileChannel;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import java.util.List;
 
 public class DAAT {
 
-    public List<Integer> executeQuery(String query, boolean tfidf, int top_k) {
-        Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");  // #TODO gli faremo leggere solo le entry dei term della query
+    public List<Integer> executeDisjunctiveQuery(String query, boolean tfidf, int top_k) {
+
+        Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
         DocIndex doc_index = DocIndexReader.readDocIndex("data/doc_index.bin");
 
         Scoring scorer = new Scoring("data/doc_index.bin");
-        List<Integer> dfs= new ArrayList<>();
-        int threshold;
-        List<Integer> doc_ids = new ArrayList<>();
-        List<Float> scores = new ArrayList<>();
+        ScoreBoard scoreBoard = new ScoreBoard(10);
 
-        String[] words = query.split("\\s+");
+        int tf;
+        int df;
 
+        String[] words = query.split("\\s+");   // TODO-  content parser.parse(query()
 
-        List<PostingListReader> postingReaders = new ArrayList<>();
-        for (String word : words) {
-            postingReaders.add(new PostingListReader(new FileChannel(new FileInputStream),word));
-            //da correggere e sistemare. ci sarà anche da passare il puntatore di termentry per dirgli da dove iniziare
-        }
+        List<PostingListBlockReader> postingReaders = new ArrayList<>();
 
-        while(postingReaders.size() != 0){
-            //trova il lettore che è sul doc id piu basso
-            //chiama la getFreqs di tutti i lettori su quel doc_id
-            //calcola la tfidf (ecc) per quel doc e lo inserisce in lista se supera il threshold. se si aggiorna il threshold
-            //chiama la next su tutti i blocchi dai quali si è letto
-            //si ripete fino a che non si finiscono tutte le postinglist
+        try{
+            // init posting readers
+            for (String word : words)
+                postingReaders.add(new PostingListBlockReader(lexicon.get(word).getTermEntryList().get(0), word));
 
-            // cerchiamo il doc_id minimo
-
-            int min = Integer.MAX_VALUE;
-            for(PostingListReader reader : postingReaders){
-                if(reader.getDocId() < min){
-                    min = reader.getDocId();
-                }
-            }
-
-
-            // score di un certo doc_id (il minimo) per quella query
-            float score = 0;
-
+            int min;
+            float score;
             List<PostingListReader> to_delete = new ArrayList<>();
 
-            for (PostingListReader reader : postingReaders) {
-                if (reader.getDocId() == min) {
-                    if(tfidf) {
-                        score += scorer.tfidf(reader.getFreqs(), lexicon.get(reader.getWord()));
-                    }else{
-                        score += scorer.computeBM25(reader.getFreqs(), doc_index.get(reader.getDocId().getLength());
-                    }
-                    if(reader.NextPosting()==null){ //TODO vedere cosa fargli ritornare
-                        reader.close();
-                        to_delete.add(reader);
+            while(postingReaders.size() != 0){
+
+                // init all blocks
+                for(PostingListBlockReader reader : postingReaders)
+                    reader.readBlock();
+
+                // search min doc_id
+                min = Integer.MAX_VALUE;
+                for(PostingListBlockReader reader : postingReaders)
+                    if(reader.getDocID() < min)
+                        min = reader.getDocID();
+
+                score = 0;
+
+                to_delete.clear();
+
+                for (PostingListBlockReader reader : postingReaders) {
+                    if (reader.getDocID() == min) {
+
+                        tf = reader.getTermFreq();
+                        df = lexicon.get(reader.getTerm()).getTermEntry(0).getDocument_frequency();
+                        if(tfidf)
+                            score += scorer.tfidf(tf, df);
+                        else
+                            score += scorer.computeBM25(tf, df, doc_index.get(reader.getDocID()).getLength());
+
+                        if(!reader.nextPosting()){
+                            reader.close();
+                            to_delete.add(reader);
+                        }
                     }
                 }
+                postingReaders.removeAll(to_delete);
+
+                // save tuple <doc_id, score>
+                scoreBoard.add(min, score);
             }
-            postingReaders.removeAll(to_delete);
-
-
-
-
-            doc_ids.add(min);
-            scores.add(score);
-
-
-            //TODO eventualmente fare in modo che droppi i risultati andanti dopo i 10
-            // se si scopre che non serve mantenerne di più
+        }catch (IOException e){
+            e.printStackTrace();
         }
+        scoreBoard.clip();
 
+        return scoreBoard.getDoc_ids();
+    }
 
-
-        return doc_ids;
+    public List<Integer> executeConjuntiveQuery(String query, boolean tfidf, int top_k) {
+        return null;
     }
 
 
-
-}
+    }
