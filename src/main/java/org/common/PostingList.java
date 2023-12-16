@@ -175,5 +175,8 @@ public class PostingList {
                 '}';
     }
 
+    public int getSize(){
+        return this.doc_ids.size();
+    }
 
 }
