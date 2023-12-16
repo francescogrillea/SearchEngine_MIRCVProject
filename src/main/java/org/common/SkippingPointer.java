@@ -39,7 +39,7 @@ public class SkippingPointer {
     }
 
     public int getMax_doc_id() {
-        return max_doc_id;
+        return this.max_doc_id;
     }
 
     public short getBlock_length_docIDs() {

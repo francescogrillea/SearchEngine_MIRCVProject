@@ -12,13 +12,13 @@ public class PostingList {
     private final List<Integer> doc_ids;
     private final List<Integer> term_frequencies;
     private final List<SkippingPointer> skipping_points;
-
     private int block_size;
 
     public PostingList() {
         this.doc_ids = new ArrayList<>();
         this.term_frequencies = new ArrayList<>();
         this.skipping_points = new ArrayList<>();
+        // TODO - block_size = 0 ?
     }
 
     public PostingList(int doc_id){
@@ -48,14 +48,11 @@ public class PostingList {
         while(buffer.hasRemaining()){
             this.term_frequencies.add(buffer.getInt());
         }
-
     }
 
     public PostingList(ByteBuffer buffer, EncoderInterface decoder_docID, EncoderInterface decoder_TFs){
 
-        this.doc_ids = new ArrayList<>();
-        this.term_frequencies = new ArrayList<>();
-        this.skipping_points = new ArrayList<>();
+        this();
 
         SkippingPointer current_pointer;
         ByteBuffer doc_ids;
@@ -73,6 +70,14 @@ public class PostingList {
             buffer.get(tfs.array());
             this.term_frequencies.addAll(decoder_TFs.decodeList(tfs));
         }
+    }
+
+    public PostingList(SkippingPointer pointer, ByteBuffer docIDsByteBuffer, ByteBuffer termFreqsByteBuffer,
+                       EncoderInterface decoder_docID, EncoderInterface decoder_TFs){
+        this();
+
+        this.doc_ids.addAll(decoder_docID.decodeList(docIDsByteBuffer));
+        this.term_frequencies.addAll(decoder_TFs.decodeList(termFreqsByteBuffer));
     }
 
     public void addPosting(int doc_id){
@@ -128,7 +133,6 @@ public class PostingList {
     }
 
 
-
     public void initPointers(){
         this.block_size = (int) Math.ceil(Math.sqrt(this.doc_ids.size()));
 
@@ -154,12 +158,20 @@ public class PostingList {
         return block_size;
     }
 
+    public int getDocId(int index){
+        return this.doc_ids.get(index);
+    }
+
+    public int getTermFrequency(int index){
+        return this.term_frequencies.get(index);
+    }
+
     @Override
     public String toString() {
-        return "PostingList{" +
-                "doc_ids=" + doc_ids +
-                ", term_frequencies=" + term_frequencies +
-                ", skipping_points=" + skipping_points +
+        return "PostingList{" + "\n" +
+                "\t doc_ids=\t" + doc_ids + "\n" +
+                "\t term_freqs=\t" + term_frequencies + "\n" +
+                "\t skipping_points=" + skipping_points +
                 '}';
     }
 

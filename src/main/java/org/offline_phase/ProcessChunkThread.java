@@ -1,13 +1,12 @@
 package org.offline_phase;
 
 import org.common.*;
-import org.offline_phase.ContentParser;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
-import org.common.ChunkHandler;
 
 import static org.offline_phase.Spimi.logger;
 
@@ -62,9 +61,9 @@ public class ProcessChunkThread implements Runnable{
             }
         }
 
-        String index_filename = String.format(ChunkHandler.basename_intermediate_index + "block_index_%05d.bin", this.block_index);
-        String lexicon_filename = String.format(ChunkHandler.basename_intermediate_lexicon + "block_lexicon_%05d.bin", this.block_index);
-        String docindex_filename = String.format(ChunkHandler.basename_intermediate_docindex + "block_docindex_%05d.bin", this.block_index);
+        String index_filename = String.format(PostingListReader.basename_intermediate_index + "block_index_%05d.bin", this.block_index);
+        String lexicon_filename = String.format(LexiconReader.basename_intermediate_lexicon + "block_lexicon_%05d.bin", this.block_index);
+        String docindex_filename = String.format(DocIndexReader.basename_intermediate_docindex + "block_docindex_%05d.bin", this.block_index);
 
 
         // write intermediate posting lists and intermediate lexicon to disk
@@ -75,7 +74,7 @@ public class ProcessChunkThread implements Runnable{
             for(String term : intermediateLexicon.keySet()){
                 int posting_index = intermediateLexicon.get(term).getTerm_index();
                 //termEntry = ChunkHandler.writePostingList(indexFileChannel, intermediateIndex.get(posting_index), true);
-                termEntry = ChunkHandler.writeIntermediatePostingList(indexFileChannel, intermediateIndex.get(posting_index));
+                termEntry = PostingListReader.writeIntermediatePostingList(indexFileChannel, intermediateIndex.get(posting_index));
                 termEntry.setBlock_index(this.block_index);
                 intermediateLexicon.get(term).addTermEntry(termEntry);
             }
@@ -84,8 +83,8 @@ public class ProcessChunkThread implements Runnable{
             e.printStackTrace();
         }
 
-        ChunkHandler.writeLexicon(intermediateLexicon, lexicon_filename, true);
-        ChunkHandler.writeDocIndex(intemediateDocIndex, docindex_filename);
+        LexiconReader.writeLexicon(intermediateLexicon, lexicon_filename, true);
+        DocIndexReader.writeDocIndex(intemediateDocIndex, docindex_filename);
     }
 
 }

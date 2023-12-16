@@ -29,10 +29,10 @@ public class Spimi {
     public Spimi(boolean process_data_flag, boolean compress_data_flag) {
         this.process_data_flag = process_data_flag;
         if(compress_data_flag)
-            ChunkHandler.setEncoder(new VBEncoder(), new VBEncoder());
+            PostingListReader.setEncoder(new VBEncoder(), new UnaryEncoder());
             //ChunkHandler.setEncoder(new VBEncoder(), new UnaryEncoder());
         else
-            ChunkHandler.setEncoder(new NoEncoder(), new NoEncoder());
+            PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
 
     }
 
@@ -84,29 +84,29 @@ public class Spimi {
         Lexicon merged_lexicon = new Lexicon();
         Lexicon current_lexicon;
 
-        File lexicon_directory = new File(ChunkHandler.basename_intermediate_lexicon);
+        File lexicon_directory = new File(LexiconReader.basename_intermediate_lexicon);
 
         File[] lexicon_files = lexicon_directory.listFiles();   // TODO - assert is != null
 
         long start_time = System.currentTimeMillis();
         // merge all intermediate lexicon to create a unique one
         for (File lexiconFile : lexicon_files) {
-            current_lexicon = ChunkHandler.readLexicon(ChunkHandler.basename_intermediate_lexicon + lexiconFile.getName());
+            current_lexicon = LexiconReader.readLexicon(LexiconReader.basename_intermediate_lexicon + lexiconFile.getName());
             merged_lexicon.merge(current_lexicon);
         }
         logger.info("Intermediate Lexicons merged in " + (System.currentTimeMillis() - start_time)/1000.0 + "s");
 
 
         // merge all intermediate DocIndex to create a unique one
-        File docindex_directory = new File(ChunkHandler.basename_intermediate_docindex);
+        File docindex_directory = new File(DocIndexReader.basename_intermediate_docindex);
         File[] docindex_files = docindex_directory.listFiles();
         start_time = System.currentTimeMillis();
-        try (FileOutputStream indexFileOutputStream = new FileOutputStream(ChunkHandler.basename + "doc_index.bin", false);
+        try (FileOutputStream indexFileOutputStream = new FileOutputStream(DocIndexReader.basename + "doc_index.bin", false);
              FileChannel docIndexFileChannel = indexFileOutputStream.getChannel()) {
 
             for(File docIndex_file : docindex_files){
 
-                try (FileInputStream indexFileInputStream = new FileInputStream(ChunkHandler.basename_intermediate_docindex + docIndex_file.getName());
+                try (FileInputStream indexFileInputStream = new FileInputStream(DocIndexReader.basename_intermediate_docindex + docIndex_file.getName());
                      FileChannel docIndex_intermediate_FileChannel = indexFileInputStream.getChannel()) {
 
                     long size = docIndex_intermediate_FileChannel.size();
@@ -132,11 +132,11 @@ public class Spimi {
              FileChannel indexFileChannel = indexFileOutputStream.getChannel()) {
 
             ArrayList<FileInputStream> fileInputStreams = new ArrayList<>();
-            File index_directory = new File(ChunkHandler.basename_intermediate_index);
+            File index_directory = new File(PostingListReader.basename_intermediate_index);
             File[] indexFiles = index_directory.listFiles();
             // TODO - assert != null
             for(File indexFile : indexFiles){
-                fileInputStreams.add(new FileInputStream(ChunkHandler.basename_intermediate_index + indexFile.getName()));
+                fileInputStreams.add(new FileInputStream(PostingListReader.basename_intermediate_index + indexFile.getName()));
             }
 
             ArrayList<FileChannel> fileChannels = new ArrayList<>();
@@ -154,11 +154,11 @@ public class Spimi {
 
                 postingList = new PostingList();
                 for(TermEntry termEntry : termEntryList){
-                    PostingList p = ChunkHandler.readIntermediatePostingList(fileChannels.get(termEntry.getBlock_index()), termEntry);
+                    PostingList p = PostingListReader.readIntermediatePostingList(fileChannels.get(termEntry.getBlock_index()), termEntry);
                     postingList.appendPostings(p);
                 }
                 postingList.initPointers();
-                finalTermEntry = ChunkHandler.writePostingList(indexFileChannel, postingList);
+                finalTermEntry = PostingListReader.writePostingList(indexFileChannel, postingList);
 
                 merged_lexicon.get(term).resetTermEntry(finalTermEntry);
                 i++;
@@ -174,18 +174,34 @@ public class Spimi {
         }
         logger.info("Intermediate Index merged in " + (System.currentTimeMillis() - start_time)/1000.0 + "s");
 
-        ChunkHandler.writeLexicon(merged_lexicon, ChunkHandler.basename + "lexicon.bin", false);
+        LexiconReader.writeLexicon(merged_lexicon, LexiconReader.basename + "lexicon.bin", false);
     }
 
     public void debug_fun(){
-        DocIndex docIndex = ChunkHandler.readDocIndex("data/doc_index.bin");
+        DocIndex docIndex = DocIndexReader.readDocIndex("data/doc_index.bin");
         //System.out.println(docIndex);
 
-        Lexicon lexicon = ChunkHandler.readLexicon("data/lexicon.bin");
+        Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
 
         TermEntryList termEntries = lexicon.get("manhattan");
-        PostingList postingList = ChunkHandler.readPostingList(termEntries.getTermEntryList().get(0));
+        PostingList postingList = PostingListReader.readPostingList(termEntries.getTermEntryList().get(0));
         System.out.println(postingList);
+        int i = 1181;
+        System.out.println("DocID: " + postingList.getDocId(i) + "\t" + "TermFreq: " + postingList.getTermFrequency(i));
+
+        String index_filename = "data/index.bin";
+
+        try (FileInputStream indexFileInputStream = new FileInputStream(index_filename);
+             FileChannel indexFileChannel = indexFileInputStream.getChannel()) {
+
+            // move to the posting list of the term
+            indexFileChannel.position(termEntries.getTermEntryList().get(0).getOffset());
+
+            int tf = PostingListReader.nextGEQ(indexFileChannel, 2076132);
+            System.out.println(tf);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
