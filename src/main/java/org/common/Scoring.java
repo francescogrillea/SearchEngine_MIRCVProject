@@ -18,10 +18,15 @@ public class Scoring {
     private int avdl;
     List<Integer> dl = new ArrayList<Integer>();
 
+    public Scoring() {
+        this.N = 0;
+        this.avdl = 0;
+    }
 
-// per ogni termine ti restituisce i term upper bound per ifidf e bm25
+    // per ogni termine ti restituisce i term upper bound per ifidf e bm25
 
-    public Scoring(String doc_index_filename) {
+
+    public void initialize(String doc_index_filename) {
         // nel costruttore ci prendiamo direttamente la collection size
 
         try (FileInputStream docIndexFileInputStream = new FileInputStream(doc_index_filename);
