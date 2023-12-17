@@ -22,29 +22,22 @@ public class Scoring {
 // per ogni termine ti restituisce i term upper bound per ifidf e bm25
 
     public Scoring(String doc_index_filename) {
-        // nel costruttore ci prendiamo direttamente la collection size
 
         try (FileInputStream docIndexFileInputStream = new FileInputStream(doc_index_filename);
              FileChannel docIndexFileChannel = docIndexFileInputStream.getChannel()) {
 
             long doc_index_size = docIndexFileChannel.size();
-            System.out.println("doc index size: " + doc_index_size);
-            // la size p la fine del doc index, torniamo indietro di un elemento che è
-            // composto da un docinfo e da un intero, il doc index occupa 2 interi
-            // quindi leggo 3 interi indietro
 
+            // the last DocID is in the 3rd to last byte
             long position = doc_index_size - (3 * Integer.BYTES);
-            //long position = doc_index_size - Integer.BYTES * 3
-            System.out.println("position: " + position);
 
-            // e leggo un intero che dovrebbe essere la chiave dell'hash map
-            ByteBuffer NByteBuffer = ByteBuffer.allocate(Integer.BYTES);
+            ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES);
 
             docIndexFileChannel.position(position);
-            docIndexFileChannel.read(NByteBuffer);
-            NByteBuffer.flip();
+            docIndexFileChannel.read(buffer);
+            buffer.flip();
 
-            this.N = NByteBuffer.getInt();
+            this.N = buffer.getInt();
 
         } catch (
                 IOException e) {
@@ -152,11 +145,10 @@ public class Scoring {
 
 
     public void getDocLenght(String doc_index_filename) {
+
         DocIndex doc_index = DocIndexReader.readDocIndex(doc_index_filename);
-        for(int i = 0; i < this.N; i++){
-            DocInfo doc_info = doc_index.get(i);
-            dl.add(doc_info.getLength());
-        }
+        for(int i = 0; i < this.N; i++)
+            dl.add(doc_index.get(i).getLength());
     }
 
 

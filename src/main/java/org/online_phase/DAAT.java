@@ -2,6 +2,12 @@ package org.online_phase;
 
 import org.common.*;
 import org.common.Scoring;
+import org.common.encoding.NoEncoder;
+import org.common.encoding.UnaryEncoder;
+import org.common.encoding.VBEncoder;
+import org.offline_phase.ContentParser;
+
+import javax.print.Doc;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -9,25 +15,47 @@ import java.util.List;
 
 public class DAAT {
 
-    public List<Integer> executeDisjunctiveQuery(String query, boolean tfidf, int top_k) {
+    private final Scoring scoring;
+    private final Lexicon lexicon;
+    private final DocIndex doc_index;
+    private final ContentParser parser;
 
-        Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
-        DocIndex doc_index = DocIndexReader.readDocIndex("data/doc_index.bin");
+    public DAAT(boolean process_data_flag, boolean compress_data_flag) {
+        this.scoring = new Scoring("data/doc_index.bin");
+        this.lexicon = LexiconReader.readLexicon("data/lexicon.bin");
+        this.doc_index = DocIndexReader.readDocIndex("data/doc_index.bin");
+        this.parser = new ContentParser("data/stop_words_english.txt", process_data_flag);
 
-        Scoring scorer = new Scoring("data/doc_index.bin");
-        ScoreBoard scoreBoard = new ScoreBoard(10);
+        if(compress_data_flag)
+            PostingListReader.setEncoder(new VBEncoder(), new UnaryEncoder());
+        else
+            PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
+    }
 
+    public List<Integer> executeDisjunctiveQuery(String query, boolean bm25, int top_k) {
+
+        List<String> query_terms = parser.processContent(query);    // TODO - può essere utile fare un query term index?
+        ScoreBoard scoreBoard = new ScoreBoard(top_k);
+        System.out.println(query_terms);
         int tf;
         int df;
-
-        String[] words = query.split("\\s+");   // TODO-  content parser.parse(query()
 
         List<PostingListBlockReader> postingReaders = new ArrayList<>();
 
         try{
             // init posting readers
-            for (String word : words)
-                postingReaders.add(new PostingListBlockReader(lexicon.get(word).getTermEntryList().get(0), word));
+            PostingListBlockReader current_reader;
+            for (String word : query_terms){
+                try{
+                    postingReaders.add(new PostingListBlockReader(lexicon.get(word).getTermEntryList().get(0), word));
+                }catch (NullPointerException e){
+                    System.out.println("Word " + word + " not found in lexicon");
+                }
+            }
+
+            // if no words have been written or no words found in lexicon
+            if(postingReaders.size() == 0)
+                return null;
 
             int min;
             float score;
@@ -54,10 +82,10 @@ public class DAAT {
 
                         tf = reader.getTermFreq();
                         df = lexicon.get(reader.getTerm()).getTermEntry(0).getDocument_frequency();
-                        if(tfidf)
-                            score += scorer.tfidf(tf, df);
+                        if(!bm25)
+                            score += scoring.tfidf(tf, df);
                         else
-                            score += scorer.computeBM25(tf, df, doc_index.get(reader.getDocID()).getLength());
+                            score += scoring.computeBM25(tf, df, doc_index.get(reader.getDocID()).getLength());
 
                         if(!reader.nextPosting()){
                             reader.close();
@@ -75,10 +103,11 @@ public class DAAT {
         }
         scoreBoard.clip();
 
+        //return doc_index.getPids(scoreBoard.getDoc_ids());
         return scoreBoard.getDoc_ids();
     }
 
-    public List<Integer> executeConjuntiveQuery(String query, boolean tfidf, int top_k) {
+    public static List<Integer> executeConjuntiveQuery(String query, boolean tfidf, int top_k) {
         return null;
     }
 

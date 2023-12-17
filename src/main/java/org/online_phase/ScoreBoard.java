@@ -35,9 +35,20 @@ public class ScoreBoard{
     }
 
     public void clip(){
+
+//        int prev = 0;
+//        int curr = 0;
+//        for(int doc_id : this.doc_ids){
+//            prev = curr;
+//            curr = doc_id;
+//            if(curr < prev)
+//                System.out.println("No order between them\t" + curr + "=" + prev);
+//
+//        }
+
         if(this.doc_ids.size() > MAX_RESULTS){
-            this.doc_ids.subList(0, MAX_RESULTS);
-            this.scores.subList(0, MAX_RESULTS);
+            this.doc_ids = this.doc_ids.subList(0, MAX_RESULTS);
+            this.scores = this.scores.subList(0, MAX_RESULTS);
         }
     }
 

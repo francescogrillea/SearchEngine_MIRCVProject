@@ -46,6 +46,13 @@ public class DocIndex {
         return buffer;
     }
 
+    public List<Integer> getPids(List<Integer> doc_ids){
+        List<Integer> list = new ArrayList<>();
+        for(int doc_id : doc_ids)
+            list.add(this.get(doc_id).getPid());
+        return list;
+    }
+
     @Override
     public String toString() {
         return "DocIndex{" + docIndex +

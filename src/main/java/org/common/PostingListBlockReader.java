@@ -11,7 +11,7 @@ public class PostingListBlockReader extends PostingListReader implements AutoClo
     private PostingList current_block;
     private final long last_byte;   // TODO - controllare in ogni metodo che quello che leggo non sfori
     private int index_pointer;
-    private String term;
+    private final String term;
 
     public PostingListBlockReader(TermEntry termEntry, String term) throws IOException {
 
