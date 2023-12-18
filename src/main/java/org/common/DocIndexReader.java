@@ -10,6 +10,7 @@ public class DocIndexReader {
 
     public static final String basename = "data/";
     public static final String basename_intermediate_docindex = "data/intermediate_postings/doc_index/";
+    public static final String basename_docindex = "data/doc_index.bin";
 
     public static void writeDocIndex(DocIndex docIndex, String doc_index_filename){
 
@@ -40,6 +41,47 @@ public class DocIndexReader {
             e.printStackTrace();
         }
         return doc_index;
+    }
+
+    public static DocInfo readDocInfo(int doc_id, String doc_index_filename){
+        // TODO - skippare a (doc_id - 1) * (Integer.Bytes + DocInfo.Bytes)
+
+        DocInfo docInfo = null;
+        int offset = (doc_id - 1) * (Integer.BYTES + DocInfo.BYTES);
+
+        try (FileInputStream docIndexFileInputStream = new FileInputStream(doc_index_filename);
+             FileChannel docIndexFileChannel = docIndexFileInputStream.getChannel()) {
+
+            long current_position = docIndexFileChannel.position();
+            docIndexFileChannel.position(current_position + offset);
+
+            ByteBuffer buffer = ByteBuffer.allocate(DocInfo.BYTES);
+            docIndexFileChannel.read(buffer);
+            buffer.flip();
+
+            docInfo = new DocInfo(buffer);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return docInfo;
+    }
+
+    public static int readN(String doc_index_filename){
+        int N = -1;
+
+        try (FileInputStream docIndexFileInputStream = new FileInputStream(doc_index_filename);
+             FileChannel docIndexFileChannel = docIndexFileInputStream.getChannel()) {
+
+            long doc_index_size = docIndexFileChannel.size();
+
+            N = (int)(doc_index_size / (long)DocIndex.BYTES);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return N;
     }
 
 }

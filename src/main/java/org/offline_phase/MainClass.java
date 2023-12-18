@@ -24,9 +24,9 @@ public class MainClass {
         long startTime = System.currentTimeMillis();
 
         Spimi spimi = new Spimi(process_data_flag, compress_data_flag);
-        //spimi.run(tarGzFilePath);
+        spimi.run(tarGzFilePath);
         //spimi.merge_chunks();
-        spimi.debug_fun();
+        //spimi.debug_fun();
 
         double executionTime = (System.currentTimeMillis() - startTime)/1000.0;
         System.out.println("Offline Phase ended in: " + executionTime + "s");

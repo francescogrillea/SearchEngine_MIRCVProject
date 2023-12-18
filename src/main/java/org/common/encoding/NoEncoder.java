@@ -16,8 +16,8 @@ public class NoEncoder implements EncoderInterface {
 
         for(Integer i : list)
             buffer.putInt(i);
-            //buffer.put(encode(i));
 
+        buffer.flip();
         return buffer;
     }
 

@@ -8,6 +8,7 @@ public class DocIndex {
 
     // TODO - valuatre se fare una lista ordinata
     private final HashMap<Integer, DocInfo> docIndex;
+    public static final int BYTES = Integer.BYTES + DocInfo.BYTES;
 
     public DocIndex() {
         this.docIndex = new HashMap<>();
@@ -34,15 +35,15 @@ public class DocIndex {
 
     public ByteBuffer serialize(){
         int size = this.docIndex.size();
-        ByteBuffer buffer = ByteBuffer.allocate(size * (Integer.BYTES + DocInfo.BYTES));
+        System.out.println(size);
+        ByteBuffer buffer = ByteBuffer.allocate(size * DocIndex.BYTES);
 
-        for(int doc_id = 1; doc_id <= size; doc_id++){
+        for(int doc_id : this.docIndex.keySet()){
             buffer.putInt(doc_id);
             buffer.put(this.docIndex.get(doc_id).serialize());
         }
 
         buffer.flip();
-
         return buffer;
     }
 

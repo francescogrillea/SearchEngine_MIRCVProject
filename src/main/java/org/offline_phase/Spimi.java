@@ -20,7 +20,7 @@ public class Spimi {
 
     private int doc_id_counter = 0;
     private int block_id_counter = 0;
-    static final int  CHUNK_SIZE = 20000;
+    static final int  CHUNK_SIZE = 25000;
     private final int _DEBUG_N_DOCS = Integer.MAX_VALUE;    // n of documents we want to analyze
     static Logger logger = Logger.getLogger(Spimi.class.getName());
     private final boolean process_data_flag;
@@ -28,9 +28,9 @@ public class Spimi {
 
     public Spimi(boolean process_data_flag, boolean compress_data_flag) {
         this.process_data_flag = process_data_flag;
+
         if(compress_data_flag)
             PostingListReader.setEncoder(new VBEncoder(), new UnaryEncoder());
-            //ChunkHandler.setEncoder(new VBEncoder(), new UnaryEncoder());
         else
             PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
 
@@ -178,24 +178,25 @@ public class Spimi {
     }
 
     public void debug_fun(){
-        DocIndex docIndex = DocIndexReader.readDocIndex("data/doc_index.bin");
-        //System.out.println(docIndex);
+        DocIndex docIndex = DocIndexReader.readDocIndex(DocIndexReader.basename_docindex);
+        System.out.println(docIndex);
 
         Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
 
         String term = "manhattan";
-        TermEntryList termEntries = lexicon.get(term);
-        PostingList postingList = PostingListReader.readPostingList(termEntries.getTermEntryList().get(0));
+        TermEntry termEntry = lexicon.get(term).getTermEntry(0);
+        System.out.println(termEntry);
+        PostingList postingList = PostingListReader.readPostingList(termEntry);
         System.out.println(postingList);
-
-        try(PostingListBlockReader reader = new PostingListBlockReader(termEntries.getTermEntryList().get(0), term)){
-
-            int tf = reader.nextGEQ(88413677);
-            System.out.println(tf);
-
-        }catch (IOException e){
-            e.printStackTrace();
-        }
+//
+//        try(PostingListBlockReader reader = new PostingListBlockReader(termEntries.getTermEntryList().get(0), term)){
+//
+//            int tf = reader.nextGEQ(88413677);
+//            System.out.println(tf);
+//
+//        }catch (IOException e){
+//            e.printStackTrace();
+//        }
     }
 
 }

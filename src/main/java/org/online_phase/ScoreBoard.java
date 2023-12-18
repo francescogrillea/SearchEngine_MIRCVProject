@@ -55,4 +55,8 @@ public class ScoreBoard{
     public List<Integer> getDoc_ids() {
         return this.doc_ids;
     }
+
+    public List<Float> getScores() {
+        return this.scores;
+    }
 }

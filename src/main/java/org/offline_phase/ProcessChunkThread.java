@@ -73,7 +73,6 @@ public class ProcessChunkThread implements Runnable{
             TermEntry termEntry;
             for(String term : intermediateLexicon.keySet()){
                 int posting_index = intermediateLexicon.get(term).getTerm_index();
-                //termEntry = ChunkHandler.writePostingList(indexFileChannel, intermediateIndex.get(posting_index), true);
                 termEntry = PostingListReader.writeIntermediatePostingList(indexFileChannel, intermediateIndex.get(posting_index));
                 termEntry.setBlock_index(this.block_index);
                 intermediateLexicon.get(term).addTermEntry(termEntry);

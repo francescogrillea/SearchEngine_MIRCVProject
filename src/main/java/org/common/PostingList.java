@@ -117,19 +117,13 @@ public class PostingList {
     public ByteBuffer serializeDocIDsBlock(EncoderInterface encoder, int start_index, int end_index) {
 
         List<Integer> doc_id_BlockSubset = this.doc_ids.subList(start_index, end_index);
-        ByteBuffer buffer = encoder.encodeList(doc_id_BlockSubset);
-
-        buffer.flip();
-        return buffer;
+        return encoder.encodeList(doc_id_BlockSubset);
     }
 
     public ByteBuffer serializeTFsBlock(EncoderInterface encoder, int start_index, int end_index){
 
         List<Integer> termFreqs_BlockSubset = this.term_frequencies.subList(start_index, end_index);
-        ByteBuffer buffer = encoder.encodeList(termFreqs_BlockSubset);
-
-        buffer.flip();
-        return buffer;
+        return encoder.encodeList(termFreqs_BlockSubset);
     }
 
 

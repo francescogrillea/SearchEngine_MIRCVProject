@@ -13,6 +13,11 @@ public class DocInfo {
         this.length = length;
     }
 
+    public DocInfo(ByteBuffer buffer){
+        this.pid = buffer.getInt();
+        this.length = buffer.getInt();
+    }
+
     public int getPid() {
         return pid;
     }
