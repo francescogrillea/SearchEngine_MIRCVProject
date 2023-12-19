@@ -59,4 +59,8 @@ public class ScoreBoard{
     public List<Float> getScores() {
         return this.scores;
     }
+
+    public void setDoc_ids(List<Integer> doc_ids) {
+        this.doc_ids = doc_ids;
+    }
 }

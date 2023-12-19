@@ -17,11 +17,11 @@ public class TFIDF implements ScoringInterface{
     }
 
     @Override
-    public double getTermUpperBound(PostingList postingList) {
+    public float getTermUpperBound(PostingList postingList) {
 
-        double upper_bound = 0;
+        float upper_bound = 0;
         int tf;
-        double tfidf;
+        float tfidf;
         int df = postingList.getSize();
 
         for (int i = 0; i < postingList.getSize(); i++){
@@ -35,17 +35,14 @@ public class TFIDF implements ScoringInterface{
     }
 
     @Override
-    public double computeScore(int... parameters) {
+    public float computeScore(int... parameters) {
 
         int tf = parameters[0];
         int df = parameters[1];
 
-        float tfidf;
-        tfidf = (float) (1 + Math.log(tf)) * (float) (Math.log( (double) this.N / df));
-        // magic
-
-        // TODO - ??? perche' dovrebbe ritornare qualcosa < 0 ????
-        return tfidf > 0 ? tfidf : 0;
+        // compute formula
+        float tfidf = (float) (1 + Math.log(tf)) * (float) (Math.log((float) this.N / df));
+        return tfidf;
     }
 
     public int getN() {

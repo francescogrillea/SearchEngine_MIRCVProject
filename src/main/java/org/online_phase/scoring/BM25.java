@@ -22,12 +22,22 @@ public class BM25 implements ScoringInterface{
 
         this.N = DocIndexReader.readN(doc_index_filename);
 
+        /*
+            TODO - non vorrei caricarlo tutto in memoria -> scrittura ordinata
+                considerare che comunque teniamo in memoria anche this.dl -> 8.000.000 * 4 Bytes -> Circa 34MB
+                senza considerare il docIndex e il lexicon
+                questo si puo' fare prima di caricare il lexicon in memoria:
+                    - calcolo dl
+                    - chiudo tutti i channel a riguardo e termino la funzione -> magari una funzione clear
+                    - leggo lexicon
+         */
+
         DocIndex doc_index = DocIndexReader.readDocIndex(doc_index_filename);
         this.dl = new ArrayList<>();
 
         int sum = 0;
-        int length = 0;
-        for (int i = 0; i < this.N; i++) {
+        int length;
+        for (int i = 1; i <= this.N; i++) {
             length = doc_index.get(i).getLength();
             sum += length;
             this.dl.add(length);
@@ -37,14 +47,14 @@ public class BM25 implements ScoringInterface{
     }
 
     @Override
-    public double getTermUpperBound(PostingList postingList) {
-        double upper_bound = 0;
-        float b = 0.75F;
-        float k = 1.5F;
+    public float getTermUpperBound(PostingList postingList) {
 
+        float upper_bound = 0;
+        float result;
 
         for (int i = 0; i < postingList.getSize(); i++){
-            double result = computeScore(postingList.getTermFrequency(i), postingList.getSize(), dl.get(postingList.getDocId(i)));
+            // TODO - sbagliato dl.get() -> non e' detto che l'indice del docID sia l'indice della relativa dl
+            result = computeScore(postingList.getTermFrequency(i), postingList.getSize(), dl.get(postingList.getDocId(i)));
             if (result > upper_bound) {
                 upper_bound = result;
             }
@@ -54,7 +64,7 @@ public class BM25 implements ScoringInterface{
     }
 
     @Override
-    public double computeScore(int... parameters) {
+    public float computeScore(int... parameters) {
 
         int tf = parameters[0];
         int df = parameters[1];
@@ -62,8 +72,8 @@ public class BM25 implements ScoringInterface{
 
         float b = 0.75F;
         float k = 2F;
-        double denominator = k*((1 - b) + b * (doc_len / this.avdl)) + tf;
-        double log = Math.log(this.N / df);
+        float denominator = k*((1 - b) + b * ((float) doc_len / this.avdl)) + tf;
+        float log = (float) Math.log((float) this.N / df);
 
         return tf / denominator * log;
     }

@@ -25,7 +25,7 @@ public class MainClass {
 
         Spimi spimi = new Spimi(process_data_flag, compress_data_flag);
         spimi.run(tarGzFilePath);
-        //spimi.merge_chunks();
+        spimi.merge_chunks();
         //spimi.debug_fun();
 
         double executionTime = (System.currentTimeMillis() - startTime)/1000.0;

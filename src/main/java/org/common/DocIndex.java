@@ -35,7 +35,6 @@ public class DocIndex {
 
     public ByteBuffer serialize(){
         int size = this.docIndex.size();
-        System.out.println(size);
         ByteBuffer buffer = ByteBuffer.allocate(size * DocIndex.BYTES);
 
         for(int doc_id : this.docIndex.keySet()){
@@ -52,6 +51,11 @@ public class DocIndex {
         for(int doc_id : doc_ids)
             list.add(this.get(doc_id).getPid());
         return list;
+    }
+
+    // TODO - potrebbe servire a risparmiare spazio in memoria
+    public void clear(){
+        this.docIndex.clear();
     }
 
     @Override

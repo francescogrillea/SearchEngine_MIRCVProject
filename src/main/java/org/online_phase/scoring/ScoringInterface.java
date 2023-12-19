@@ -4,6 +4,6 @@ import org.common.PostingList;
 
 public interface ScoringInterface {
 
-    double getTermUpperBound(PostingList postingList);
-    double computeScore(int... parameters);
+    float getTermUpperBound(PostingList postingList);
+    float computeScore(int... parameters);
 }

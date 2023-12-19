@@ -1,5 +1,7 @@
 package org.online_phase;
 
+import org.common.DocIndexReader;
+
 import java.util.List;
 import java.util.Scanner;
 
@@ -17,7 +19,7 @@ public class MainClass {
                 process_data_flag = true;
             if (arg.equals("-c"))
                 compress_data_flag = true;
-            if(arg.equals("-s=BM25"))
+            if(arg.equals("-s=BM25") || arg.equals("-s=bm25"))
                 bm25 = true;
             if(arg.startsWith("-k"))
                 top_k = Integer.parseInt(arg.split("-k=")[1]);
@@ -40,11 +42,19 @@ public class MainClass {
             start_query = System.currentTimeMillis();
 
             results = daat.executeDisjunctiveQuery(userInput, top_k);
-
             time_elapsed_query = System.currentTimeMillis() - start_query;
 
             System.out.println("Query: " + userInput);
-            System.out.println("Top " + top_k + " doc ids:\t" + results.getDoc_ids());  // TODO docIndexReader.getDocPid(results.getDoc_ids())
+            System.out.println("Top " + top_k + " doc ids:\t" + results.getDoc_ids());
+            System.out.println("Scores:\t" + results.getScores());
+            System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
+
+            start_query = System.currentTimeMillis();
+            results = daat.executeConjunctiveQuery(userInput, top_k);
+            time_elapsed_query = System.currentTimeMillis() - start_query;
+
+            System.out.println("Query: " + userInput);
+            System.out.println("Top " + top_k + " doc ids:\t" + results.getDoc_ids());
             System.out.println("Scores:\t" + results.getScores());
             System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
 
