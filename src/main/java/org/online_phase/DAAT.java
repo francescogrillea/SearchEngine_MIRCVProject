@@ -41,7 +41,6 @@ public class DAAT {
 
         List<String> query_terms = this.parser.processContent(query);    // TODO - può essere utile fare un query term index?
         ScoreBoard scoreBoard = new ScoreBoard(top_k);
-        System.out.println(query_terms);
         int tf;
         int df;
         // store document frequencies for each query term to save time during the scoring function -> Object Size: 4bytes * n of query terms
