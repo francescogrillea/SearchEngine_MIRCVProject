@@ -49,20 +49,24 @@ public class Spimi {
             tarArchiveInputStream.getNextTarEntry();
 
             ContentParser parser = new ContentParser("data/stop_words_english.txt", this.process_data_flag);
-            String line;
+            String line = null;
             do{
-                StringBuilder chunk_text = new StringBuilder();
-                do{
-                    line = br.readLine();
+                if(Runtime.getRuntime().freeMemory() < (Runtime.getRuntime().totalMemory() * 20 / 100)) {
+                    Thread.sleep(1000);
+                }else{
+                    StringBuilder chunk_text = new StringBuilder();
+                    do {
+                        line = br.readLine();
 
-                    if ( line != null && !line.isEmpty()) {
-                        chunk_text.append(line).append("\n");
-                        doc_id_counter++;
-                    }
-                }while(doc_id_counter < CHUNK_SIZE * (block_id_counter+1) && line != null && doc_id_counter < _DEBUG_N_DOCS);
+                        if (line != null && !line.isEmpty()) {
+                            chunk_text.append(line).append("\n");
+                            doc_id_counter++;
+                        }
+                    } while (doc_id_counter < CHUNK_SIZE * (block_id_counter + 1) && line != null && doc_id_counter < _DEBUG_N_DOCS);
 
-                threadpool.submit(new ProcessChunkThread(chunk_text, block_id_counter, parser));
-                block_id_counter++;
+                    threadpool.submit(new ProcessChunkThread(chunk_text, block_id_counter, parser));
+                    block_id_counter++;
+                }
             }while (line != null && doc_id_counter < _DEBUG_N_DOCS);
 
             // wait all threads to finish
@@ -75,6 +79,8 @@ public class Spimi {
 
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } catch( InterruptedException e){
+            System.out.println("interrupted excepiton");
         }
 
     }
