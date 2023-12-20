@@ -101,6 +101,13 @@ public class PostingListBlockReader extends PostingListReader implements AutoClo
 
         // TODO - controllare se fileChannel.position > termEntry.length
 
+        // if the doc_id is lower than the one in the current position return 0
+        if(this.current_block.getDocId(this.index_pointer) > doc_id)
+            return 0;
+        // if the doc_id is the one in the current position return its term frequency
+        else if (this.current_block.getDocId(this.index_pointer) == doc_id)
+            return this.current_block.getTermFrequency(this.index_pointer);
+
         long position_tmp;
         SkippingPointer pointer = null;
 

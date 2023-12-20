@@ -14,6 +14,7 @@ public class Lexicon implements LexiconInterface {
     }
 
     public Lexicon(ByteBuffer buffer){
+
         this.lexicon = new HashMap<>();
         int word_length;
         byte[] word;
@@ -26,8 +27,15 @@ public class Lexicon implements LexiconInterface {
             // read the term
             word = new byte[word_length];
             buffer.get(word);
+
             // read the term entry
-            i = new TermEntry(buffer.getInt(), buffer.getLong(), buffer.getLong(), buffer.getInt());
+            i = new TermEntry(buffer.getInt(),
+                    buffer.getLong(),
+                    buffer.getLong(),
+                    buffer.getInt(),
+                    buffer.getFloat(),
+                    buffer.getFloat()
+            );
 
             this.lexicon.put(new String(word, StandardCharsets.UTF_8), new TermEntryList(i));
         }

@@ -103,6 +103,9 @@ public class PostingListReader {
         long docIDs_blockStartPosition;
         long termFreqs_blockStartPosition;
 
+        float tfidf_ub;
+        float bm25_ub;
+
         int start_index_block = 0;
         int end_index_block;
         // for each block (subset of the posting list) identified by the skipping pointer

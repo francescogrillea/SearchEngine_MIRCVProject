@@ -42,6 +42,7 @@ public class BM25 implements ScoringInterface{
             sum += length;
             this.dl.add(length);
         }
+        doc_index.clear();
 
         this.avdl = sum / this.N;
     }
@@ -53,8 +54,7 @@ public class BM25 implements ScoringInterface{
         float result;
 
         for (int i = 0; i < postingList.getSize(); i++){
-            // TODO - sbagliato dl.get() -> non e' detto che l'indice del docID sia l'indice della relativa dl
-            result = computeScore(postingList.getTermFrequency(i), postingList.getSize(), dl.get(postingList.getDocId(i)));
+            result = computeScore(postingList.getTermFrequency(i), postingList.getSize(), this.dl.get(postingList.getDocId(i)-1));
             if (result > upper_bound) {
                 upper_bound = result;
             }

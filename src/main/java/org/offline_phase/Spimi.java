@@ -6,6 +6,9 @@ import org.common.*;
 import org.common.encoding.NoEncoder;
 import org.common.encoding.UnaryEncoder;
 import org.common.encoding.VBEncoder;
+import org.online_phase.scoring.BM25;
+import org.online_phase.scoring.TFIDF;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -143,6 +146,8 @@ public class Spimi {
             for(FileInputStream fos : fileInputStreams)
                 fileChannels.add(fos.getChannel());
 
+            BM25 bm25 = new BM25(DocIndexReader.basename_docindex);
+            TFIDF tfidf = new TFIDF(DocIndexReader.basename_docindex);
 
             TermEntry finalTermEntry;
             int i = 0;
@@ -160,6 +165,9 @@ public class Spimi {
                 postingList.initPointers();
                 finalTermEntry = PostingListReader.writePostingList(indexFileChannel, postingList);
 
+                // TODO - use multithreading
+                finalTermEntry.setTfidf_upper_bound(tfidf.getTermUpperBound(postingList));
+                finalTermEntry.setBm25_upper_bound(bm25.getTermUpperBound(postingList));
                 merged_lexicon.get(term).resetTermEntry(finalTermEntry);
                 i++;
             }
@@ -173,21 +181,21 @@ public class Spimi {
             e.printStackTrace();
         }
         logger.info("Intermediate Index merged in " + (System.currentTimeMillis() - start_time)/1000.0 + "s");
-
+        // TODO - wait all threads to finish
         LexiconReader.writeLexicon(merged_lexicon, LexiconReader.basename + "lexicon.bin", false);
     }
 
     public void debug_fun(){
-        DocIndex docIndex = DocIndexReader.readDocIndex(DocIndexReader.basename_docindex);
-        System.out.println(docIndex);
 
+        //DocIndex docIndex = DocIndexReader.readDocIndex(DocIndexReader.basename_docindex);
+        //System.out.println(docIndex);
         Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
 
         String term = "manhattan";
         TermEntry termEntry = lexicon.get(term).getTermEntry(0);
         System.out.println(termEntry);
-        PostingList postingList = PostingListReader.readPostingList(termEntry);
-        System.out.println(postingList);
+        //PostingList postingList = PostingListReader.readPostingList(termEntry);
+        //System.out.println(postingList);
 //
 //        try(PostingListBlockReader reader = new PostingListBlockReader(termEntries.getTermEntryList().get(0), term)){
 //

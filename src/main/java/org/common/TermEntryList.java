@@ -1,8 +1,5 @@
 package org.common;
 
-import org.apache.commons.lang3.SerializationException;
-
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
