@@ -12,8 +12,10 @@ public class PostingListBlockReader extends PostingListReader implements AutoClo
     private final long last_byte;   // TODO - controllare in ogni metodo che quello che leggo non sfori
     private int index_pointer;
     private final String term;
+    private float termUpperBound;
+    private int documentFrequency;
 
-    public PostingListBlockReader(TermEntry termEntry, String term) throws IOException {
+    public PostingListBlockReader(TermEntry termEntry, String term,boolean bm25) throws IOException {
 
         this.fileChannel = new FileInputStream(basename_index).getChannel();
         this.fileChannel.position(termEntry.getOffset());
@@ -21,8 +23,13 @@ public class PostingListBlockReader extends PostingListReader implements AutoClo
 
         this.current_block = null;
         this.index_pointer = 0;
-
+        if(bm25){
+            this.termUpperBound = termEntry.getBm25_upper_bound();
+        }else{
+            this.termUpperBound = termEntry.getTfidf_upper_bound();
+        }
         this.term = term;
+        documentFrequency = termEntry.getDocument_frequency();
     }
 
 //    public boolean hasNext() throws IOException {
@@ -144,5 +151,18 @@ public class PostingListBlockReader extends PostingListReader implements AutoClo
     @Override
     public void close() throws IOException {
         this.fileChannel.close();
+    }
+
+    public float getTermUpperBound(){
+        return this.termUpperBound;
+    }
+    public void setTermUpperBound(float newTermUpperBound){
+        this.termUpperBound= newTermUpperBound;
+    }
+    public int getDocumentFrequency(){
+        return this.documentFrequency;
+    }
+    public void setDocumentFrequency(int newDocumentFrequency){
+        this.documentFrequency= newDocumentFrequency;
     }
 }

@@ -20,6 +20,7 @@ public class DAAT {
     private final DocIndex doc_index;
     private final ContentParser parser;
 
+
     public DAAT(boolean process_data_flag, boolean compress_data_flag, boolean bm25) {
 
         if(!bm25)
@@ -55,7 +56,7 @@ public class DAAT {
             for (String word : query_terms){
                 try{
                     termEntry = lexicon.get(word).getTermEntryList().get(0);
-                    postingReaders.add(new PostingListBlockReader(termEntry, word));
+                    postingReaders.add(new PostingListBlockReader(termEntry, word,scoring instanceof BM25));
                     document_freqs.add(termEntry.getDocument_frequency());
                 }catch (NullPointerException e){
                     System.out.println("Word " + word + " not found in lexicon");
@@ -154,7 +155,7 @@ public class DAAT {
             for (String word : query_terms){
                 try{
                     termEntry = lexicon.get(word).getTermEntryList().get(0);
-                    postingReaders.add(new PostingListBlockReader(termEntry, word));
+                    postingReaders.add(new PostingListBlockReader(termEntry, word, scoring instanceof BM25));
                     document_freqs.add(termEntry.getDocument_frequency());
                 }catch (NullPointerException e){
                     System.out.println("Word " + word + " not found in lexicon");

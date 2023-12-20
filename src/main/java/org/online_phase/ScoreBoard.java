@@ -8,29 +8,35 @@ public class ScoreBoard{
     private List<Integer> doc_ids;
     private List<Float> scores;
     private final int MAX_RESULTS;
+    private float threshold;
 
     public ScoreBoard(int max_result) {
         this.doc_ids = new ArrayList<>();
         this.scores = new ArrayList<>();
         this.MAX_RESULTS = max_result;
+        this.threshold = 0;
     }
 
-    public void add(int doc_id, float score){
+    public boolean add(int doc_id, float score){
 
         // if the last score is higher than the current one, ignore it
         if(this.doc_ids.size() >= MAX_RESULTS && scores.get(MAX_RESULTS - 1) > score)
-            return;
+            return false;
 
         // otherwise iterate through the list until the correct position is found
         int index;
         for(index = 0; index < doc_ids.size() && scores.get(index) > score; index++)
             if(index > MAX_RESULTS - 1)
-                return;
+                return false;
 
         // insert the elements at the determined index
         this.doc_ids.add(index, doc_id);
         this.scores.add(index, score);
 
+        if(this.doc_ids.size()>=MAX_RESULTS){
+            this.threshold=this.scores.get(MAX_RESULTS-1);
+        }
+        return true;
         // TODO - valutare se eliminare l'ultimo elemento o clippare dopo
     }
 
@@ -62,5 +68,8 @@ public class ScoreBoard{
 
     public void setDoc_ids(List<Integer> doc_ids) {
         this.doc_ids = doc_ids;
+    }
+    public float getThreshold(){
+        return this.threshold;
     }
 }
