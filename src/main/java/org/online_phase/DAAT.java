@@ -6,11 +6,8 @@ import org.offline_phase.ContentParser;
 import org.online_phase.scoring.BM25;
 import org.online_phase.scoring.ScoringInterface;
 import org.online_phase.scoring.TFIDF;
-
 import java.io.IOException;
 import java.util.ArrayList;
-
-import java.util.Iterator;
 import java.util.List;
 
 public class DAAT {
@@ -69,7 +66,7 @@ public class DAAT {
 
             int min_docID;
             float score;
-            List<PostingListReader> to_delete = new ArrayList<>();
+            List<PostingListBlockReader> to_delete = new ArrayList<>();
 
             int df_index = 0;
             int df_size = document_freqs.size();

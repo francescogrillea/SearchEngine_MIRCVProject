@@ -41,8 +41,7 @@ public class TFIDF implements ScoringInterface{
         int df = parameters[1];
 
         // compute formula
-        float tfidf = (float) (1 + Math.log(tf)) * (float) (Math.log((float) this.N / df));
-        return tfidf;
+        return tf > 0 ? (float) (1 + Math.log(tf)) * (float) (Math.log((float) this.N / df)) : 0;
     }
 
     public int getN() {

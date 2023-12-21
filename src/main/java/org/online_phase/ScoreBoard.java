@@ -19,6 +19,7 @@ public class ScoreBoard{
 
     public boolean add(int doc_id, float score){
 
+
         // if the last score is higher than the current one, ignore it
         if(this.doc_ids.size() >= MAX_RESULTS && scores.get(MAX_RESULTS - 1) > score)
             return false;

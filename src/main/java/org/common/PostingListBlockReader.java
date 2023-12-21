@@ -15,7 +15,7 @@ public class PostingListBlockReader extends PostingListReader implements AutoClo
     private float termUpperBound;
     private int documentFrequency;
 
-    public PostingListBlockReader(TermEntry termEntry, String term,boolean bm25) throws IOException {
+    public PostingListBlockReader(TermEntry termEntry, String term, boolean bm25) throws IOException {
 
         this.fileChannel = new FileInputStream(basename_index).getChannel();
         this.fileChannel.position(termEntry.getOffset());
@@ -23,13 +23,11 @@ public class PostingListBlockReader extends PostingListReader implements AutoClo
 
         this.current_block = null;
         this.index_pointer = 0;
-        if(bm25){
-            this.termUpperBound = termEntry.getBm25_upper_bound();
-        }else{
-            this.termUpperBound = termEntry.getTfidf_upper_bound();
-        }
+
+        this.termUpperBound = bm25 ? termEntry.getBm25_upper_bound() : termEntry.getTfidf_upper_bound();
+
         this.term = term;
-        documentFrequency = termEntry.getDocument_frequency();
+        this.documentFrequency = termEntry.getDocument_frequency();
     }
 
 //    public boolean hasNext() throws IOException {
@@ -106,36 +104,53 @@ public class PostingListBlockReader extends PostingListReader implements AutoClo
 
     public Integer nextGEQ(int doc_id) throws IOException {
 
-        // TODO - controllare se fileChannel.position > termEntry.length
-
         // if the doc_id is lower than the one in the current position return 0
         if(this.current_block.getDocId(this.index_pointer) > doc_id)
             return 0;
-        // if the doc_id is the one in the current position return its term frequency
-        else if (this.current_block.getDocId(this.index_pointer) == doc_id)
-            return this.current_block.getTermFrequency(this.index_pointer);
+
+        // if the doc_id is the one in the current block return its term frequency
+        else if(this.getMaxDocId() >= doc_id)
+            return this.getTermFrequency(doc_id);
+
+
 
         long position_tmp;
         SkippingPointer pointer = null;
 
         // move along pointers until the block has been found
         boolean found_flag = false;
-        while(!found_flag){
+        while(fileChannel.position() + SkippingPointer.SIZE < this.last_byte){
+
             pointer = readBlockPointer();
-            if(pointer.getMax_doc_id() < doc_id && fileChannel.position() < this.last_byte){
-                position_tmp = fileChannel.position();
-                fileChannel.position(position_tmp +  pointer.getBlock_length_docIDs() + pointer.getBlock_length_docIDs());
-            }
-            else
+            if(pointer.getMax_doc_id() >= doc_id){
                 found_flag = true;
+                break;
+            }
+            position_tmp = fileChannel.position();
+            fileChannel.position(position_tmp +  pointer.getBlock_length_docIDs() + pointer.getBlock_length_TFs());
         }
 
-        readBlockContent(pointer);
-        int index = this.current_block.getDoc_ids().indexOf(doc_id);
+        if(found_flag){
+            readBlockContent(pointer);
+            return this.getTermFrequency(doc_id);
+        }
 
-        return this.current_block.getTermFrequency(index);
+        return 0;
     }
 
+    private void rewind(){
+        // TODO - rewind to the starting of the posting list if it has been read to the end
+        // E' possibile che succeda di fare un rewind ? Non penso -> la posting list la scandisco una volta sola per query
+    }
+
+    private int getTermFrequency(int doc_id){
+        int index = this.current_block.getDoc_ids().indexOf(doc_id);
+        if(index != -1){
+            this.index_pointer = index;
+            return this.current_block.getTermFrequency(index);
+        }
+        return 0;
+    }
 
     public int getDocID(){
         return this.current_block.getDocId(index_pointer);
@@ -151,6 +166,15 @@ public class PostingListBlockReader extends PostingListReader implements AutoClo
     @Override
     public void close() throws IOException {
         this.fileChannel.close();
+    }
+
+    public PostingList getCurrent_block() {
+        return current_block;
+    }
+
+    public int getMaxDocId(){
+        int n = this.current_block.getDoc_ids().size();
+        return this.current_block.getDocId(n-1);
     }
 
     public float getTermUpperBound(){
