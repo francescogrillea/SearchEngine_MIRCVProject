@@ -17,8 +17,8 @@ import java.util.Collections;
 public class MaxScore {
     private final ScoringInterface scoring;
     private Lexicon lexicon;
-    private final DocIndex doc_index;
     private final ContentParser parser;
+
     MaxScore(boolean process_data_flag, boolean compress_data_flag, boolean bm25){
 
         if(!bm25)
@@ -27,7 +27,6 @@ public class MaxScore {
             this.scoring = new BM25(DocIndexReader.basename_docindex);
 
         this.lexicon = LexiconReader.readLexicon("data/lexicon.bin");
-        this.doc_index = DocIndexReader.readDocIndex("data/doc_index.bin"); // TODO - da togliere, troppa roba in memoria
         this.parser = new ContentParser("data/stop_words_english.txt", process_data_flag);
 
         if(compress_data_flag)
@@ -104,7 +103,7 @@ public class MaxScore {
                         df = postingReaders.get(i).getDocumentFrequency();
 
                         if(scoring instanceof BM25)
-                            score += scoring.computeScore(tf, df, doc_index.get(postingReaders.get(i).getDocID()).getLength());
+                            score += scoring.computeScore(tf, df, DocIndexReader.readDocInfo(postingReaders.get(i).getDocID()).getLength());
                         else
                             score += scoring.computeScore(tf, df);
 
@@ -122,11 +121,11 @@ public class MaxScore {
                     if(score + postingReaders.get(i).getTermUpperBound() <= scoreBoard.getThreshold())
                         break;
 
-                    tf = postingReaders.get(i).nextGEQ(min_docID);  // TODO - non mi convince
+                    tf = postingReaders.get(i).nextGEQ(min_docID);
                     df = postingReaders.get(i).getDocumentFrequency();
 
                     if(scoring instanceof BM25)
-                        score += scoring.computeScore(tf, df, doc_index.get(postingReaders.get(i).getDocID()).getLength());
+                        score += scoring.computeScore(tf, df, DocIndexReader.readDocInfo(postingReaders.get(i).getDocID()).getLength());
                     else
                         score += scoring.computeScore(tf, df);
                 }
@@ -141,7 +140,6 @@ public class MaxScore {
                     while(pivot < postingReaders.size() && postingReaders.get(pivot).getTermUpperBound() <= scoreBoard.getThreshold())
                         pivot++;
                 }
-//                System.out.println();
             }
 
         }catch(IOException e){
@@ -151,7 +149,7 @@ public class MaxScore {
         // cutoff at k
         scoreBoard.clip();
         // return the PID associated to the retrieved doc_ids
-        scoreBoard.setDoc_ids(doc_index.getPids(scoreBoard.getDoc_ids()));
+        scoreBoard.setDoc_ids(DocIndexReader.getPids(scoreBoard.getDoc_ids()));
 
         return scoreBoard;
     }

@@ -73,4 +73,22 @@ public class ScoreBoard{
     public float getThreshold(){
         return this.threshold;
     }
+
+    @Override
+    public String toString() {
+
+        if(this.doc_ids.isEmpty())
+            return "No relevant document found according to the chosen criterion";
+
+        StringBuilder result = new StringBuilder();
+        result.append("Top " + this.MAX_RESULTS + " results: {\n");
+
+        result.append("\t").append(this.doc_ids).append("\n");
+        result.append("\t").append(this.scores).append("\n");
+
+        result.append("}");
+        return result.toString();
+
+
+    }
 }

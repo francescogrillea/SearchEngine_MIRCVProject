@@ -54,14 +54,20 @@ public class MainClass {
             System.out.print("> ");
             userInput = scanner.nextLine();
 
+            // MaxScore
+            System.out.println("=== MaxScore Disjunctive ===");
+            start_query = System.currentTimeMillis();
+            results = maxScore.executeDisjunctiveQuery(userInput, top_k);
+            time_elapsed_query = System.currentTimeMillis() - start_query;
+            System.out.println(results);
+            System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
+
             // DAAT Disjunctive
             System.out.println("=== DAAT DISJUNCTIVE ===");
             start_query = System.currentTimeMillis();
             results = daat.executeDisjunctiveQuery(userInput, top_k);
             time_elapsed_query = System.currentTimeMillis() - start_query;
-            System.out.println("Query: " + userInput);
-            System.out.println("Top " + top_k + " doc ids:\t" + results.getDoc_ids());
-            System.out.println("Scores:\t" + results.getScores());
+            System.out.println(results);
             System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
 
 
@@ -70,19 +76,7 @@ public class MainClass {
             start_query = System.currentTimeMillis();
             results = daat.executeConjunctiveQuery(userInput, top_k);
             time_elapsed_query = System.currentTimeMillis() - start_query;
-            System.out.println("Query: " + userInput);
-            System.out.println("Top " + top_k + " doc ids:\t" + results.getDoc_ids());
-            System.out.println("Scores:\t" + results.getScores());
-            System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
-
-            // MaxScore
-            System.out.println("=== MaxScore Disjunctive ===");
-            start_query = System.currentTimeMillis();
-            results = maxScore.executeDisjunctiveQuery(userInput, top_k);
-            time_elapsed_query = System.currentTimeMillis() - start_query;
-            System.out.println("Query: " + userInput);
-            System.out.println("Top " + top_k + " doc ids:\t" + results.getDoc_ids());
-            System.out.println("Scores:\t" + results.getScores());
+            System.out.println(results);
             System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
 
         }while (!userInput.equals(terminationSequence));

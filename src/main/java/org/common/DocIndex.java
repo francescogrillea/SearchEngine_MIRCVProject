@@ -37,7 +37,10 @@ public class DocIndex {
         int size = this.docIndex.size();
         ByteBuffer buffer = ByteBuffer.allocate(size * DocIndex.BYTES);
 
-        for(int doc_id : this.docIndex.keySet()){
+        List<Integer> sorted_doc_ids = new ArrayList<>(this.docIndex.keySet());
+        Collections.sort(sorted_doc_ids);
+
+        for(int doc_id : sorted_doc_ids){
             buffer.putInt(doc_id);
             buffer.put(this.docIndex.get(doc_id).serialize());
         }
@@ -51,6 +54,10 @@ public class DocIndex {
         for(int doc_id : doc_ids)
             list.add(this.get(doc_id).getPid());
         return list;
+    }
+
+    public HashMap<Integer, DocInfo> getDocIndex() {
+        return docIndex;
     }
 
     // TODO - potrebbe servire a risparmiare spazio in memoria

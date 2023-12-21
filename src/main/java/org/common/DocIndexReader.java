@@ -45,17 +45,15 @@ public class DocIndexReader {
         return doc_index;
     }
 
-    public static DocInfo readDocInfo(int doc_id, String doc_index_filename){
-        // TODO - skippare a (doc_id - 1) * (Integer.Bytes + DocInfo.Bytes)
+    public static DocInfo readDocInfo(int doc_id){
 
         DocInfo docInfo = null;
-        int offset = (doc_id - 1) * (Integer.BYTES + DocInfo.BYTES);
+        int offset = (doc_id - 1) * (Integer.BYTES + DocInfo.BYTES) + Integer.BYTES;
 
-        try (FileInputStream docIndexFileInputStream = new FileInputStream(doc_index_filename);
+        try (FileInputStream docIndexFileInputStream = new FileInputStream(basename_docindex);
              FileChannel docIndexFileChannel = docIndexFileInputStream.getChannel()) {
 
-            long current_position = docIndexFileChannel.position();
-            docIndexFileChannel.position(current_position + offset);
+            docIndexFileChannel.position(offset);
 
             ByteBuffer buffer = ByteBuffer.allocate(DocInfo.BYTES);
             docIndexFileChannel.read(buffer);
@@ -67,6 +65,13 @@ public class DocIndexReader {
             e.printStackTrace();
         }
         return docInfo;
+    }
+
+    public static List<Integer> getPids(List<Integer> doc_ids){
+        List<Integer> output = new ArrayList<>();
+        for(int doc_id : doc_ids)
+            output.add(DocIndexReader.readDocInfo(doc_id).getPid());
+        return output;
     }
 
     public static int readN(String doc_index_filename){

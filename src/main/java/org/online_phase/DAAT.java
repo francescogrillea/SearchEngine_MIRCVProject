@@ -14,7 +14,6 @@ public class DAAT {
 
     private final ScoringInterface scoring;
     private final Lexicon lexicon;
-    private final DocIndex doc_index;
     private final ContentParser parser;
 
 
@@ -26,7 +25,6 @@ public class DAAT {
             this.scoring = new BM25(DocIndexReader.basename_docindex);
 
         this.lexicon = LexiconReader.readLexicon("data/lexicon.bin");
-        this.doc_index = DocIndexReader.readDocIndex("data/doc_index.bin"); // TODO - da togliere, troppa roba in memoria
         this.parser = new ContentParser("data/stop_words_english.txt", process_data_flag);
 
         if(compress_data_flag)
@@ -107,7 +105,7 @@ public class DAAT {
                         if(scoring instanceof TFIDF)        // TODO - non mi piace sta scrittura
                             score += scoring.computeScore(tf, df);
                         else
-                            score += scoring.computeScore(tf, df, doc_index.get(block.getDocID()).getLength());    // TODO - il docIndex vorrei non caricarlo in memoria
+                            score += scoring.computeScore(tf, df, DocIndexReader.readDocInfo(block.getDocID()).getLength());    // TODO - il docIndex vorrei non caricarlo in memoria
 
                         if(!block.nextPosting()){
                             block.close();
@@ -126,7 +124,7 @@ public class DAAT {
             e.printStackTrace();
         }
         scoreBoard.clip();
-        scoreBoard.setDoc_ids(doc_index.getPids(scoreBoard.getDoc_ids()));
+        scoreBoard.setDoc_ids(DocIndexReader.getPids(scoreBoard.getDoc_ids()));
         return scoreBoard;
     }
 
@@ -155,7 +153,9 @@ public class DAAT {
                     postingReaders.add(new PostingListBlockReader(termEntry, word, scoring instanceof BM25));
                     document_freqs.add(termEntry.getDocument_frequency());
                 }catch (NullPointerException e){
+                    // TODO - if query term not exists, return a empty lists
                     System.out.println("Word " + word + " not found in lexicon");
+                    return scoreBoard;
                 }
             }
 
@@ -204,7 +204,7 @@ public class DAAT {
                         if(scoring instanceof TFIDF)        // TODO - non mi piace sta scrittura
                             score += scoring.computeScore(tf, df);
                         else
-                            score += scoring.computeScore(tf, df, doc_index.get(block.getDocID()).getLength());    // TODO - il docIndex vorrei non caricarlo in memoria
+                            score += scoring.computeScore(tf, df, DocIndexReader.readDocInfo(block.getDocID()).getLength());    // TODO - il docIndex vorrei non caricarlo in memoria
 
                         // move to the next posting and check if there's still posting to read
                         if(!block.nextPosting()){
@@ -236,7 +236,7 @@ public class DAAT {
         }
 
         scoreBoard.clip();
-        scoreBoard.setDoc_ids(doc_index.getPids(scoreBoard.getDoc_ids()));
+        scoreBoard.setDoc_ids(DocIndexReader.getPids(scoreBoard.getDoc_ids()));
 
         return scoreBoard;
     }
