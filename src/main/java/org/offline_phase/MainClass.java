@@ -8,7 +8,7 @@ public class MainClass {
     public static void main(String[] args) {
 
         logger.info("Offline Phase has started");
-        String tarGzFilePath = "data/collection.tar.gz";
+        String tarGzFilePath = "data/smallest_collection.tar.gz";
         //String tarGzFilePath = "data/collection_subset_top100000.tar.gz";
 
         // read flags from argv
@@ -25,8 +25,8 @@ public class MainClass {
         long startTime = System.currentTimeMillis();
 
         Spimi spimi = new Spimi(process_data_flag, compress_data_flag);
-//        spimi.run(tarGzFilePath);
-//        spimi.merge_chunks();
+        //spimi.run(tarGzFilePath);
+        //spimi.merge_chunks();
         spimi.debug_fun();
 
         double executionTime = (System.currentTimeMillis() - startTime)/1000.0;

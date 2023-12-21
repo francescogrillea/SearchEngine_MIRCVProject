@@ -20,6 +20,12 @@ public class SkippingPointer {
         this.block_length_TFs = buffer.getShort();
     }
 
+    public SkippingPointer(int max_doc_id, short block_length_docIDs, short block_length_TFs) {
+        this.max_doc_id = max_doc_id;
+        this.block_length_docIDs = block_length_docIDs;
+        this.block_length_TFs = block_length_TFs;
+    }
+
     public ByteBuffer serialize(){
         ByteBuffer byteBuffer = ByteBuffer.allocate(SIZE);
         byteBuffer.putInt(max_doc_id);

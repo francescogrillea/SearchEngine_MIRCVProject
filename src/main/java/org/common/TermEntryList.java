@@ -13,6 +13,13 @@ public class TermEntryList implements Iterable<TermEntry>{        // TODO - shou
         this.term_index = term_index;
         this.termEntryList = new ArrayList<>();
     }
+    public TermEntryList(int term_index, List<TermEntry> lista) {
+        this.term_index = term_index;
+        this.termEntryList = lista;
+    }
+
+    public TermEntryList() {
+    }
 
     public TermEntryList(TermEntry termEntry){
         this.termEntryList = new ArrayList<>();
@@ -50,9 +57,8 @@ public class TermEntryList implements Iterable<TermEntry>{        // TODO - shou
 
     @Override
     public String toString() {
-        return "TermEntryList{" +
-                "term_index=" + term_index +
-                ", termEntryList=" + termEntryList +
+        return "\tTermEntryList{" +
+                ",termEntryList=" + termEntryList +
                 '}';
     }
 

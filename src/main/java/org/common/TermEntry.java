@@ -92,11 +92,11 @@ public class TermEntry {
     public String toString() {
         return "TermEntry{" +
                 "block_index=" + block_index +
-                ", offset=" + offset +
-                ", length=" + length +
-                ", document_frequency=" + document_frequency +
-                ", tfidf_upper_bound=" + tfidf_upper_bound +
-                ", bm25_upper_bound=" + bm25_upper_bound +
+                ",offset=" + offset +
+                ",length=" + length +
+                ",document_frequency=" + document_frequency +
+                ",tfidf_upper_bound=" + tfidf_upper_bound +
+                ",bm25_upper_bound=" + bm25_upper_bound +
                 '}';
     }
 }

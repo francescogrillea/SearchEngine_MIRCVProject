@@ -48,20 +48,6 @@ public class PostingListReader {
     }
 
 
-    /**
-     * Reads the entire posting list associated with a given term from the index file,
-     * decompresses it, and constructs a PostingList object.
-     *
-     * The method uses information from the provided TermEntry, such as offset and length,
-     * to locate and read the compressed posting list data from the index file.
-     *
-     * @param termEntry The TermEntry object containing information about the term,
-     *                  including offset and length in the index file.
-     * @return A PostingList object representing the decompressed posting list for the given term.
-     *         Returns null if an IOException occurs during the file reading process.
-     * @throws NullPointerException If the provided TermEntry is null.
-     * @throws IllegalArgumentException If the TermEntry's offset or length is negative.
-     */
     public static PostingList readPostingList(TermEntry termEntry){
 
         String index_filename = basename + "index.bin";
@@ -83,19 +69,7 @@ public class PostingListReader {
         return postingList;
     }
 
-    /**
-     * Writes the provided PostingList to the specified FileChannel, storing the posting list on disk.
-     * The method also returns a TermEntry object representing the location and length information
-     * of the stored posting list in the index file.
-     *
-     * @param indexFileChannel The FileChannel where the posting list will be stored.
-     * @param postingList The PostingList to be written to the index file.
-     * @return A TermEntry object specifying the location and length of the stored posting list
-     *         in the index file, along with the number of documents in the posting list.
-     * @throws IOException If an I/O error occurs during the file writing process.
-     * @throws NullPointerException If either the indexFileChannel or postingList is null.
-     * @throws IllegalArgumentException If the starting position of the indexFileChannel is negative.
-     */
+
     public static TermEntry writePostingList(FileChannel indexFileChannel, PostingList postingList) throws IOException {
 
         long start_PostingList_position = indexFileChannel.position();

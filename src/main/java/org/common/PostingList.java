@@ -89,6 +89,12 @@ public class PostingList {
             this.term_frequencies.set(index, (this.term_frequencies.get(index) + 1));
         }
     }
+    public void addPosting(int doc_id, int term_freq){
+        this.doc_ids.add(doc_id);
+        this.term_frequencies.add(term_freq);
+
+    }
+
 
     public void appendPostings(PostingList new_postings){
         this.doc_ids.addAll(new_postings.getDoc_ids());
@@ -173,4 +179,7 @@ public class PostingList {
         return this.doc_ids.size();
     }
 
+    public void addSkippingPointer(SkippingPointer skippingPointer){
+        this.skipping_points.add(skippingPointer);
+    }
 }

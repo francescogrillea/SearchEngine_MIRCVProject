@@ -41,6 +41,11 @@ public class Lexicon implements LexiconInterface {
         }
     }
 
+    public Lexicon(HashMap<String, TermEntryList> lexicon, int size) {
+        this.lexicon = lexicon;
+        this.size = size;
+    }
+
     @Override
     public int add(String term) {
         TermEntryList termEntries = this.lexicon.get(term);
@@ -109,8 +114,14 @@ public class Lexicon implements LexiconInterface {
 
     @Override
     public String toString() {
-        return "Lexicon{" +
-                "lexicon=" + lexicon +
-                '}';
+
+        StringBuilder stringBuilder = new StringBuilder("Lexicon{");
+
+        for (String k: lexicon.keySet()){
+            stringBuilder.append(lexicon.get(k).toString());
+        }
+        stringBuilder.append("}\n");
+        return stringBuilder.toString();
+
     }
 }
