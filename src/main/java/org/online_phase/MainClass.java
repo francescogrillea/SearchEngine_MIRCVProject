@@ -4,20 +4,22 @@ import org.common.*;
 import org.common.encoding.NoEncoder;
 import org.common.encoding.UnaryEncoder;
 import org.common.encoding.VBEncoder;
-import org.online_phase.scoring.BM25;
+import org.online_phase.query_processing.DAATConjunctive;
+import org.online_phase.query_processing.DAATDisjunctive;
+import org.online_phase.query_processing.MaxScore;
+import org.online_phase.query_processing.QueryProcessing;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Scanner;
 
 public class MainClass {
-    public static void main( String[] args ) throws IOException {
+    public static void main( String[] args ) {
 
         // read flags from argv
         boolean process_data_flag = false;  // true if stemming and stopword removal must be applied
         boolean compress_data_flag = false; // true if data compression techniques must be applied
         boolean bm25 = false;
         int top_k = 10;
+        QueryProcessing processing = null;
 
         for (String arg : args) {
             if (arg.equals("-p"))
@@ -28,6 +30,10 @@ public class MainClass {
                 bm25 = true;
             if(arg.startsWith("-k"))
                 top_k = Integer.parseInt(arg.split("-k=")[1]);
+            if(arg.startsWith("-mode=c"))
+                processing = new DAATConjunctive(process_data_flag, compress_data_flag, bm25, top_k);
+            else if(arg.startsWith("-mode=d"))
+                processing = new DAATDisjunctive(process_data_flag, compress_data_flag, bm25, top_k);
         }
 
         if(compress_data_flag)
@@ -35,7 +41,8 @@ public class MainClass {
         else
             PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
 
-//        debug_fun(process_data_flag, compress_data_flag, bm25);
+        if(processing == null)
+            processing = new MaxScore(process_data_flag, compress_data_flag, bm25, top_k);
 
 
         Scanner scanner = new Scanner(System.in);
@@ -45,40 +52,18 @@ public class MainClass {
         long start_query;
         long time_elapsed_query;
 
-        System.out.println("Initializing DAAT");
-        DAAT daat = new DAAT(process_data_flag, compress_data_flag, bm25);
-        MaxScore maxScore = new MaxScore(process_data_flag, compress_data_flag, bm25);
-        System.out.println("DAAT has been initialized");
+        System.out.println("Initializing Query Processing System");
 
         do{
             System.out.print("> ");
             userInput = scanner.nextLine();
 
-            // MaxScore
-            System.out.println("=== MaxScore Disjunctive ===");
             start_query = System.currentTimeMillis();
-            results = maxScore.executeDisjunctiveQuery(userInput, top_k);
+            results = processing.executeQuery(userInput);
             time_elapsed_query = System.currentTimeMillis() - start_query;
             System.out.println(results);
             System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
-
-            // DAAT Disjunctive
-            System.out.println("=== DAAT DISJUNCTIVE ===");
-            start_query = System.currentTimeMillis();
-            results = daat.executeDisjunctiveQuery(userInput, top_k);
-            time_elapsed_query = System.currentTimeMillis() - start_query;
-            System.out.println(results);
-            System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
-
-
-            // DAAT Conjunctive
-            System.out.println("=== DAAT CONJUNCTIVE ===");
-            start_query = System.currentTimeMillis();
-            results = daat.executeConjunctiveQuery(userInput, top_k);
-            time_elapsed_query = System.currentTimeMillis() - start_query;
-            System.out.println(results);
-            System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
-
+            System.out.println("\n");
         }while (!userInput.equals(terminationSequence));
 
         scanner.close();

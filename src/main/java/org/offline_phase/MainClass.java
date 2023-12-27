@@ -8,10 +8,10 @@ public class MainClass {
     public static void main(String[] args) {
 
         logger.info("Offline Phase has started");
-        String tarGzFilePath = "data/collection.tar.gz";
-        //String tarGzFilePath = "data/collection_subset_top100000.tar.gz";
+        //String tarGzFilePath = "data/collection.tar.gz";
+        String tarGzFilePath = "data/collection_subset_top10.tar.gz";
 
-        // read flags from argv\
+        // read flags from argv
         boolean process_data_flag = false;  // true if stemming and stopword removal must be applied
         boolean compress_data_flag = false; // true if data compression techniques must be applied
 
@@ -24,10 +24,12 @@ public class MainClass {
 
         long startTime = System.currentTimeMillis();
 
+        // init the spimi process
         Spimi spimi = new Spimi(process_data_flag, compress_data_flag);
+        // generate intermediate chunks
         spimi.run(tarGzFilePath);
+        // merge intermediate chunks
         spimi.merge_chunks();
-        //spimi.debug_fun();
 
         double executionTime = (System.currentTimeMillis() - startTime)/1000.0;
         System.out.println("Offline Phase ended in: " + executionTime + "s");

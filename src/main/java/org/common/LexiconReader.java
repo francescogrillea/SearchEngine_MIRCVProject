@@ -6,12 +6,24 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+/**
+ * The LexiconReader class provides utility methods for reading and writing Lexicon
+ * structures from/to disk. Methods in this class are static and intended for use in
+ * scenarios where Lexicon structures need to be serialized to disk or deserialized for
+ * information retrieval applications.
+ */
 public class LexiconReader {
 
-    public static final String basename = "data/";
-    public static final String basename_intermediate_lexicon = "data/intermediate_postings/lexicon/";
+    public static final String basename = "data/";  // the base directory path for data
+    public static final String basename_intermediate_lexicon = "data/intermediate_postings/lexicon/";   // the base directory path for intermediate Lexicon files
 
-    public static void writeLexicon(Lexicon lexicon, String lexicon_filename, boolean intermediate){
+    /**
+     * Writes a Lexicon to disk using the specified file path.
+     *
+     * @param lexicon           The Lexicon to be written to disk.
+     * @param lexicon_filename The file path where the Lexicon will be stored.
+     */
+    public static void writeLexicon(Lexicon lexicon, String lexicon_filename){
 
         try (FileOutputStream indexFileOutputStream = new FileOutputStream(lexicon_filename, false);
              FileChannel indexFileChannel = indexFileOutputStream.getChannel()) {
@@ -24,6 +36,12 @@ public class LexiconReader {
         }
     }
 
+    /**
+     * Reads a Lexicon from disk using the specified file path.
+     *
+     * @param lexicon_filename The file path from which the Lexicon will be read.
+     * @return The deserialized Lexicon object.
+     */
     public static Lexicon readLexicon(String lexicon_filename){
 
         Lexicon lexicon = null;

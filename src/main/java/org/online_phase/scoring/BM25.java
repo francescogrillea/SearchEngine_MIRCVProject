@@ -1,14 +1,7 @@
 package org.online_phase.scoring;
 
-import org.common.DocIndex;
 import org.common.DocIndexReader;
-import org.common.DocInfo;
 import org.common.PostingList;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,28 +14,15 @@ public class BM25 implements ScoringInterface{
     public BM25(String doc_index_filename) {
 
         this.N = DocIndexReader.readN(doc_index_filename);
-
-        /*
-            TODO - non vorrei caricarlo tutto in memoria -> scrittura ordinata
-                considerare che comunque teniamo in memoria anche this.dl -> 8.000.000 * 4 Bytes -> Circa 34MB
-                senza considerare il docIndex e il lexicon
-                questo si puo' fare prima di caricare il lexicon in memoria:
-                    - calcolo dl
-                    - chiudo tutti i channel a riguardo e termino la funzione -> magari una funzione clear
-                    - leggo lexicon
-         */
-
-        DocIndex doc_index = DocIndexReader.readDocIndex(doc_index_filename);
         this.dl = new ArrayList<>();
 
         int sum = 0;
         int length;
         for (int i = 1; i <= this.N; i++) {
-            length = doc_index.get(i).getLength();
+            length = DocIndexReader.readDocInfo(i).getLength();
             sum += length;
             this.dl.add(length);
         }
-        doc_index.clear();
 
         this.avdl = sum / this.N;
     }

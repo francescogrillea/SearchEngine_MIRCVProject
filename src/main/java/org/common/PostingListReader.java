@@ -7,20 +7,43 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+/**
+ * The PostingListReader class provides utility methods for reading and writing
+ * PostingList objects to and from an index file.
+ * The class supports setting EncoderInterface instances for decoding DocIDs
+ * and term frequencies.
+ */
 public class PostingListReader {
 
-    public static final String basename = "data/";
-    public static final String basename_intermediate_index = "data/intermediate_postings/index/";
-    public static final String basename_index = "data/index.bin";
-    protected static EncoderInterface encoderDocID;
-    protected static EncoderInterface encoderTermFreqs;
+    public static final String basename = "data/";  // the base directory path for data
+    public static final String basename_intermediate_index = "data/intermediate_postings/index/";   // the base directory path for intermediate Index files
+    public static final String basename_index = "data/index.bin";   // the file path for the final Index file
+    protected static EncoderInterface encoderDocID; // the encoder for encoding and decoding DocIDs
+    protected static EncoderInterface encoderTermFreqs; // the encoder for encoding and decoding term frequencies
 
-
+    /**
+     * Sets the encoder instances to be used for decoding DocIDs and term frequencies.
+     *
+     * @param e_docID The EncoderInterface for decoding DocIDs.
+     * @param e_tf The EncoderInterface for decoding term frequencies.
+     */
     public static void setEncoder(EncoderInterface e_docID, EncoderInterface e_tf){
         encoderDocID = e_docID;
         encoderTermFreqs = e_tf;
     }
 
+    /**
+     * Writes an intermediate posting list to a FileChannel and returns a TermEntry
+     * object representing the stored posting list's location and length in the file.
+     *
+     * @param indexFileChannel The FileChannel where the posting list will be stored.
+     * @param postingList The PostingList to be written to the index file.
+     * @return A TermEntry object specifying the location and length of the stored posting list
+     *         in the index file, along with the number of documents in the posting list.
+     * @throws IOException If an I/O error occurs during the file writing process.
+     * @throws NullPointerException If either the indexFileChannel or postingList is null.
+     * @throws IllegalArgumentException If the starting position of the indexFileChannel is negative.
+     */
     public static TermEntry writeIntermediatePostingList(FileChannel indexFileChannel, PostingList postingList) throws IOException {
         long startPosition = indexFileChannel.position();
         indexFileChannel.write(postingList.serialize());
@@ -29,6 +52,18 @@ public class PostingListReader {
         return new TermEntry(-1, startPosition, length, 0);
     }
 
+    /**
+     * Reads an intermediate posting list from a FileChannel using the provided TermEntry
+     * and constructs a PostingList object.
+     *
+     * @param indexFileChannel The FileChannel from which to read the posting list.
+     * @param termEntry The TermEntry object containing information about the term,
+     *                  including offset and length in the index file.
+     * @return A PostingList object representing the decompressed posting list for the given term.
+     *         Returns null if an IOException occurs during the file reading process.
+     * @throws NullPointerException If the provided TermEntry is null.
+     * @throws IllegalArgumentException If the TermEntry's offset or length is negative.
+     */
     public static PostingList readIntermediatePostingList(FileChannel indexFileChannel, TermEntry termEntry){
 
         PostingList postingList = null;
@@ -63,6 +98,8 @@ public class PostingListReader {
      * @throws IllegalArgumentException If the TermEntry's offset or length is negative.
      */
     public static PostingList readPostingList(TermEntry termEntry){
+
+        // THIS METHOD IS USED ONLY FOR TEST PURPOSES
 
         String index_filename = basename + "index.bin";
         PostingList postingList = null;
@@ -103,9 +140,6 @@ public class PostingListReader {
         long docIDs_blockStartPosition;
         long termFreqs_blockStartPosition;
 
-        float tfidf_ub;
-        float bm25_ub;
-
         int start_index_block = 0;
         int end_index_block;
         // for each block (subset of the posting list) identified by the skipping pointer
@@ -136,10 +170,4 @@ public class PostingListReader {
         }
         return new TermEntry(-1, start_PostingList_position, indexFileChannel.position() - start_PostingList_position, postingList.getDoc_ids().size());
     }
-
-
-
-
-
-
 }

@@ -8,7 +8,6 @@ import org.common.encoding.UnaryEncoder;
 import org.common.encoding.VBEncoder;
 import org.online_phase.scoring.BM25;
 import org.online_phase.scoring.TFIDF;
-
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -19,16 +18,28 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+/**
+ * The Spimi (Single-Pass In-Memory Indexing) processes a collection of documents,
+ * tokenizes and parses them, creates intermediate index structures and merges them
+ * to create a final  index for information retrieval.
+ * In order to speed up computation, multithreading has been used to parallelize
+ * the processing of document chunks.
+ */
 public class Spimi {
 
-    private int doc_id_counter = 0;
-    private int block_id_counter = 0;
-    static final int  CHUNK_SIZE = 25000;
-    private final int _DEBUG_N_DOCS = Integer.MAX_VALUE;    // n of documents we want to analyze
+    private int doc_id_counter = 0;     // doc_id counter, useful for generating filenames
+    private int chunk_id_counter = 0;   // chunk counter, useful for generating filenames
+    static final int  CHUNK_SIZE = 4;   // number of documents for each chunk. BE CAREFUL, IT DEPENDS ON YOUR MACHINE
     static Logger logger = Logger.getLogger(Spimi.class.getName());
-    private final boolean process_data_flag;
+    private final boolean process_data_flag;    // true if stopword removal and stemming must be applied
 
 
+    /**
+     * Constructs a new Spimi instance with the specified configuration flags.
+     *
+     * @param process_data_flag     Flag indicating whether to apply stemming and stopwords removal.
+     * @param compress_data_flag    Flag indicating whether to compress the final index.
+     */
     public Spimi(boolean process_data_flag, boolean compress_data_flag) {
         this.process_data_flag = process_data_flag;
 
@@ -39,10 +50,17 @@ public class Spimi {
 
     }
 
+    /**
+     * Processes a collection of documents, tokenizes and parses them, and creates
+     * intermediate index structures using a multithreaded approach.
+     *
+     * @param collection_filepath   The file path to the collection of documents.
+     */
     public void run(String collection_filepath){
 
         ExecutorService threadpool = Executors.newFixedThreadPool(10);
 
+        // read the collection.tar.gz in a buffered way
         try(FileInputStream inputStream = new FileInputStream(collection_filepath);
             BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
             GzipCompressorInputStream gzipCompressorInputStream = new GzipCompressorInputStream(bufferedInputStream);
@@ -51,22 +69,26 @@ public class Spimi {
 
             tarArchiveInputStream.getNextTarEntry();
 
+            // initialize content parser
             ContentParser parser = new ContentParser("data/stop_words_english.txt", this.process_data_flag);
             String line;
             do{
+                // chunk of CHUNK_SIZE documents
                 StringBuilder chunk_text = new StringBuilder();
                 do{
                     line = br.readLine();
 
+                    // append lines to the chunks
                     if ( line != null && !line.isEmpty()) {
                         chunk_text.append(line).append("\n");
                         doc_id_counter++;
                     }
-                }while(doc_id_counter < CHUNK_SIZE * (block_id_counter+1) && line != null && doc_id_counter < _DEBUG_N_DOCS);
+                }while(doc_id_counter < CHUNK_SIZE * (chunk_id_counter+1) && line != null);
 
-                threadpool.submit(new ProcessChunkThread(chunk_text, block_id_counter, parser));
-                block_id_counter++;
-            }while (line != null && doc_id_counter < _DEBUG_N_DOCS);
+                // give each chunk to a thread
+                threadpool.submit(new ProcessChunkThread(chunk_text, chunk_id_counter, parser));
+                chunk_id_counter++;
+            }while (line != null);
 
             // wait all threads to finish
             threadpool.shutdown();
@@ -82,6 +104,10 @@ public class Spimi {
 
     }
 
+    /**
+     * Merges the intermediate index structures to create a final index for
+     * information retrieval. This includes merging lexicons, DocIndex, and index files.
+     */
     public void merge_chunks(){
 
         Lexicon merged_lexicon = new Lexicon();
@@ -89,7 +115,7 @@ public class Spimi {
 
         File lexicon_directory = new File(LexiconReader.basename_intermediate_lexicon);
 
-        File[] lexicon_files = lexicon_directory.listFiles();   // TODO - assert is != null
+        File[] lexicon_files = lexicon_directory.listFiles();
 
         long start_time = System.currentTimeMillis();
         // merge all intermediate lexicon to create a unique one
@@ -116,7 +142,8 @@ public class Spimi {
                     ByteBuffer buffer = ByteBuffer.allocate((int) size);
                     docIndex_intermediate_FileChannel.read(buffer);
                     buffer.flip();
-
+                    // we don't instantiate a docIndex object, but we just copy-paste all intermediate docIndexes into
+                    // the final docIndex.bin file
                     docIndexFileChannel.write(buffer);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -134,10 +161,10 @@ public class Spimi {
         try (FileOutputStream indexFileOutputStream = new FileOutputStream("data/index.bin", false);
              FileChannel indexFileChannel = indexFileOutputStream.getChannel()) {
 
+            // open a file channel for each intermediate index file
             ArrayList<FileInputStream> fileInputStreams = new ArrayList<>();
             File index_directory = new File(PostingListReader.basename_intermediate_index);
             File[] indexFiles = index_directory.listFiles();
-            // TODO - assert != null
             for(File indexFile : indexFiles){
                 fileInputStreams.add(new FileInputStream(PostingListReader.basename_intermediate_index + indexFile.getName()));
             }
@@ -154,20 +181,29 @@ public class Spimi {
             PostingList postingList;
             for(String term : merged_lexicon.keySet()){
 
+                // get a list of pointers to different intermediate index files
                 TermEntryList termEntryList = merged_lexicon.get(term);
                 termEntryList.setTerm_index(i);
 
+                // the final posting for a given term
                 postingList = new PostingList();
+
+                // each term has a list of pointers to different intermediate index files
                 for(TermEntry termEntry : termEntryList){
                     PostingList p = PostingListReader.readIntermediatePostingList(fileChannels.get(termEntry.getBlock_index()), termEntry);
                     postingList.appendPostings(p);
                 }
+
+                // generate skipping pointers on the final posting list
                 postingList.initPointers();
+                // write the final posting list
                 finalTermEntry = PostingListReader.writePostingList(indexFileChannel, postingList);
 
-                // TODO - use multithreading
+                // compute both TFIDF and BM25 term upper bound for the given term
                 finalTermEntry.setTfidf_upper_bound(tfidf.getTermUpperBound(postingList));
                 finalTermEntry.setBm25_upper_bound(bm25.getTermUpperBound(postingList));
+
+                // update the termEntry information
                 merged_lexicon.get(term).resetTermEntry(finalTermEntry);
                 i++;
             }
@@ -181,30 +217,8 @@ public class Spimi {
             e.printStackTrace();
         }
         logger.info("Intermediate Index merged in " + (System.currentTimeMillis() - start_time)/1000.0 + "s");
-        // TODO - wait all threads to finish
-        LexiconReader.writeLexicon(merged_lexicon, LexiconReader.basename + "lexicon.bin", false);
-    }
-
-    public void debug_fun(){
-
-        //DocIndex docIndex = DocIndexReader.readDocIndex(DocIndexReader.basename_docindex);
-        //System.out.println(docIndex);
-        Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
-
-        String term = "manhattan";
-        TermEntry termEntry = lexicon.get(term).getTermEntry(0);
-        System.out.println(termEntry);
-        //PostingList postingList = PostingListReader.readPostingList(termEntry);
-        //System.out.println(postingList);
-//
-//        try(PostingListBlockReader reader = new PostingListBlockReader(termEntries.getTermEntryList().get(0), term)){
-//
-//            int tf = reader.nextGEQ(88413677);
-//            System.out.println(tf);
-//
-//        }catch (IOException e){
-//            e.printStackTrace();
-//        }
+        // write lexicon to disk
+        LexiconReader.writeLexicon(merged_lexicon, LexiconReader.basename + "lexicon.bin");
     }
 
 }

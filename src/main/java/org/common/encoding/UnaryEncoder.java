@@ -6,7 +6,7 @@ import java.util.List;
 
 public class UnaryEncoder implements EncoderInterface{
     @Override
-    public ByteBuffer encodeList(List<Integer> block) { //take in list of freqs, return encoded bytebuffer
+    public ByteBuffer encodeList(List<Integer> block) {
         int totalBits = 0;
 
         // computing total number of bits to be written
@@ -14,7 +14,8 @@ public class UnaryEncoder implements EncoderInterface{
             totalBits += k;
         }
 
-        int totalBytes = (totalBits + 7) / 8; // computing total number of bytes needed
+        // computing total number of bytes needed
+        int totalBytes = (totalBits + 7) / 8;
 
         byte[] compressedArray = new byte[totalBytes]; // initialization of array for the compressed bytes
 
@@ -108,34 +109,3 @@ public class UnaryEncoder implements EncoderInterface{
         return 0;
     }
 }
-
-
-//DECOMPRESSIONE UNARY:
-
-//    public static List<Short> integerArrayDecompression(byte[] toBeDecompressed) {
-//        List<Short> decompressedArray=new ArrayList<>();
-//        int onesCounter = 0;
-//
-//        for (byte b : toBeDecompressed) {
-//            for (int i = 7; i >= 0; i--) {
-//                // check if the i-th bit is set to 1 or 0
-//                if (((b >> i) & 1) == 0) {
-//                    // i-th bit is set to 0
-//
-//                    // writing the decompressed number in the array of the results
-//                    decompressedArray.add((short)(onesCounter+1));
-//
-//                    // resetting the counter of ones for next integer
-//                    onesCounter = 0;
-//
-//                } else {
-//                    // i-th bit is set to 1
-//
-//                    // increment the counter of ones
-//                    onesCounter++;
-//                }
-//            }
-//        }
-//
-//        return decompressedArray;
-//    }

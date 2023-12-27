@@ -1,15 +1,20 @@
 package org.evaluation;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.online_phase.DAAT;
+import org.common.PostingListReader;
+import org.common.encoding.NoEncoder;
+import org.common.encoding.UnaryEncoder;
+import org.common.encoding.VBEncoder;
+import org.online_phase.query_processing.DAATConjunctive;
 import org.online_phase.ScoreBoard;
+import org.online_phase.query_processing.DAATDisjunctive;
+import org.online_phase.query_processing.MaxScore;
+import org.online_phase.query_processing.QueryProcessing;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
 
 
 public class MainClass {
@@ -20,6 +25,7 @@ public class MainClass {
         boolean compress_data_flag = false; // true if data compression techniques must be applied
         boolean bm25 = false;
         int top_k = 10;
+        QueryProcessing processing = null;
 
         for (String arg : args) {
             if (arg.equals("-p"))
@@ -30,6 +36,10 @@ public class MainClass {
                 bm25 = true;
             if(arg.startsWith("-k"))
                 top_k = Integer.parseInt(arg.split("-k=")[1]);
+            if(arg.startsWith("-mode=c"))
+                processing = new DAATConjunctive(process_data_flag, compress_data_flag, bm25, top_k);
+            else if(arg.startsWith("-mode=d"))
+                processing = new DAATDisjunctive(process_data_flag, compress_data_flag, bm25, top_k);
         }
 
         String query_path = "data/msmarco-test2020-queries.tsv.gz";
@@ -38,15 +48,21 @@ public class MainClass {
             GzipCompressorInputStream gzipCompressorInputStream = new GzipCompressorInputStream(inputStream);
             BufferedReader br = new BufferedReader(new InputStreamReader(gzipCompressorInputStream, StandardCharsets.UTF_8))) {
 
+            if(compress_data_flag)
+                PostingListReader.setEncoder(new VBEncoder(), new UnaryEncoder());
+            else
+                PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
+
+            if(processing == null)
+                processing = new MaxScore(process_data_flag, compress_data_flag, bm25, top_k);
+
 
             ScoreBoard results;
             long start_query;
             long time_elapsed_query;
             long total_time = 0;
 
-            System.out.println("Initializing DAAT");
-            DAAT daat = new DAAT(process_data_flag, compress_data_flag, bm25);
-            System.out.println("DAAT has been initialized");
+            System.out.println("Initializing Query Processing System");
 
             int n_queries_issued = 0;
             String line;
@@ -63,7 +79,7 @@ public class MainClass {
                     start_query = System.currentTimeMillis();
 
                     start_query = System.currentTimeMillis();
-                    results = daat.executeDisjunctiveQuery(lines[1], top_k);
+                    results = processing.executeQuery(lines[1]);
                     time_elapsed_query = System.currentTimeMillis() - start_query;
                     total_time += time_elapsed_query;
 

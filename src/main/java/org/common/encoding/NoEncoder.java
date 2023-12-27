@@ -1,7 +1,5 @@
 package org.common.encoding;
 
-import org.common.encoding.EncoderInterface;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;

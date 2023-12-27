@@ -1,10 +1,11 @@
-package org.online_phase;
+package org.online_phase.query_processing;
 
 import org.common.*;
 import org.common.encoding.NoEncoder;
 import org.common.encoding.UnaryEncoder;
 import org.common.encoding.VBEncoder;
 import org.offline_phase.ContentParser;
+import org.online_phase.ScoreBoard;
 import org.online_phase.scoring.BM25;
 import org.online_phase.scoring.ScoringInterface;
 import org.online_phase.scoring.TFIDF;
@@ -14,12 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 
-public class MaxScore {
+public class MaxScore implements QueryProcessing {
     private final ScoringInterface scoring;
+    private final ScoreBoard scoreBoard;
+
     private Lexicon lexicon;
     private final ContentParser parser;
 
-    MaxScore(boolean process_data_flag, boolean compress_data_flag, boolean bm25){
+    public MaxScore(boolean process_data_flag, boolean compress_data_flag, boolean bm25, int top_k){
 
         if(!bm25)
             this.scoring = new TFIDF(DocIndexReader.basename_docindex);
@@ -28,6 +31,7 @@ public class MaxScore {
 
         this.lexicon = LexiconReader.readLexicon("data/lexicon.bin");
         this.parser = new ContentParser("data/stop_words_english.txt", process_data_flag);
+        this.scoreBoard = new ScoreBoard(top_k);
 
         if(compress_data_flag)
             PostingListReader.setEncoder(new VBEncoder(), new UnaryEncoder());
@@ -35,10 +39,9 @@ public class MaxScore {
             PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
     }
 
-    public ScoreBoard executeDisjunctiveQuery(String query, int top_k){
-
+    @Override
+    public ScoreBoard executeQuery(String query) {
         List<String> query_terms = this.parser.processContent(query);
-        ScoreBoard scoreBoard = new ScoreBoard(top_k);
 
         List<PostingListBlockReader> postingReaders = new ArrayList<>();
 
@@ -153,4 +156,6 @@ public class MaxScore {
 
         return scoreBoard;
     }
+
+
 }

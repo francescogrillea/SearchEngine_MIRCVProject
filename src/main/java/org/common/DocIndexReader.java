@@ -8,12 +8,25 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The DocIndexReader class provides utility methods for reading and writing
+ * DocIndex structures from/to disk.
+ * Methods in this class are static and intended for use in scenarios where
+ * DocIndex structures need to be serialized to disk or deserialized for
+ * information retrieval applications.
+ */
 public class DocIndexReader {
 
-    public static final String basename = "data/";
-    public static final String basename_intermediate_docindex = "data/intermediate_postings/doc_index/";
-    public static final String basename_docindex = "data/doc_index.bin";
+    public static final String basename = "data/";  // the base directory path for data
+    public static final String basename_intermediate_docindex = "data/intermediate_postings/doc_index/";    // the base directory path for intermediate DocIndex files
+    public static final String basename_docindex = "data/doc_index.bin";    // the file path for the final DocIndex file
 
+    /**
+     * Writes a DocIndex to disk using the specified file path.
+     *
+     * @param docIndex           The DocIndex to be written to disk.
+     * @param doc_index_filename The file path where the DocIndex will be stored.
+     */
     public static void writeDocIndex(DocIndex docIndex, String doc_index_filename){
 
         try (FileOutputStream docIndexFileOutputStream = new FileOutputStream(doc_index_filename, false);
@@ -26,6 +39,12 @@ public class DocIndexReader {
         }
     }
 
+    /**
+     * Reads a DocIndex from disk using the specified file path.
+     *
+     * @param doc_index_filename The file path from which the DocIndex will be read.
+     * @return The deserialized DocIndex object.
+     */
     public static DocIndex readDocIndex(String doc_index_filename){
 
         DocIndex doc_index = null;
@@ -45,6 +64,12 @@ public class DocIndexReader {
         return doc_index;
     }
 
+    /**
+     * Reads DocInfo for a specific document ID from the primary DocIndex file.
+     *
+     * @param doc_id The document ID for which DocInfo is to be retrieved.
+     * @return The DocInfo object associated with the specified document ID.
+     */
     public static DocInfo readDocInfo(int doc_id){
 
         DocInfo docInfo = null;
@@ -67,6 +92,12 @@ public class DocIndexReader {
         return docInfo;
     }
 
+    /**
+     * Retrieves pids for a list of document IDs from the primary DocIndex file.
+     *
+     * @param doc_ids The list of document IDs for which pids are to be retrieved.
+     * @return A list of process IDs corresponding to the input document IDs.
+     */
     public static List<Integer> getPids(List<Integer> doc_ids){
         List<Integer> output = new ArrayList<>();
         for(int doc_id : doc_ids)
@@ -74,6 +105,14 @@ public class DocIndexReader {
         return output;
     }
 
+    /**
+     * Reads the number of entries (N) in a DocIndex file based on the specified file path.
+     * Since the docIndex file is sorted by doc_id, and the doc_ids are incrementally,
+     * N is the total number of documents.
+     *
+     * @param doc_index_filename The file path of the DocIndex file.
+     * @return The number of entries (N) in the DocIndex file, i.e. the number of documents
+     */
     public static int readN(String doc_index_filename){
         int N = -1;
 
