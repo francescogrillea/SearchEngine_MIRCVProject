@@ -8,8 +8,8 @@ import java.nio.ByteBuffer;
  */
 public class TermEntry {
     private int chunk_index;    // the chunk index where the term is located. Useful in merging intermediate postings lists
-    private long offset;    // the offset within the file where the term's postings start.
-    private long length;    // the length of the term's postings within the file. It can be changed to int to save space
+    private final long offset;    // the offset within the file where the term's postings start.
+    private final long length;    // the length of the term's postings within the file. It can be changed to int to save space
     private final int document_frequency;   // the document frequency of the term in the collection, i.e. how many documents contain that term
     private float tfidf_upper_bound;    // the upper bound for TF-IDF score of the term
     private float bm25_upper_bound; // the upper bound for BM25 score of the term

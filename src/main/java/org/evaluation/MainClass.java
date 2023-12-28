@@ -26,23 +26,37 @@ public class MainClass {
         boolean bm25 = false;
         int top_k = 10;
         QueryProcessing processing = null;
+        StringBuilder results_filename = new StringBuilder();
+        results_filename.append("data/evaluation/results");
 
         for (String arg : args) {
-            if (arg.equals("-p"))
+            if (arg.equals("-p")){
                 process_data_flag = true;
-            if (arg.equals("-c"))
+                results_filename.append("-p");
+            }
+            if (arg.equals("-c")){
                 compress_data_flag = true;
-            if(arg.equals("-s=BM25") || arg.equals("-s=bm25"))
+                results_filename.append("-c");
+            }
+            if(arg.equals("-s=BM25") || arg.equals("-s=bm25")){
                 bm25 = true;
-            if(arg.startsWith("-k"))
+                results_filename.append("-bm25");
+            }
+            if(arg.startsWith("-k")){
                 top_k = Integer.parseInt(arg.split("-k=")[1]);
-            if(arg.startsWith("-mode=c"))
-                processing = new DAATConjunctive(process_data_flag, compress_data_flag, bm25, top_k);
-            else if(arg.startsWith("-mode=d"))
-                processing = new DAATDisjunctive(process_data_flag, compress_data_flag, bm25, top_k);
+                results_filename.append("-k=").append(top_k);
+            }
+            if(arg.startsWith("-mode=c")){
+                processing = new DAATConjunctive(process_data_flag, compress_data_flag, bm25);
+                results_filename.append("-conj");
+            }
+            else if(arg.startsWith("-mode=d")){
+                processing = new DAATDisjunctive(process_data_flag, compress_data_flag, bm25);
+                results_filename.append("-disj");
+            }
         }
 
-        String query_path = "data/msmarco-test2020-queries.tsv.gz";
+        String query_path = "data/evaluation/msmarco-test2020-queries.tsv.gz";
 
         try(FileInputStream inputStream = new FileInputStream(query_path);
             GzipCompressorInputStream gzipCompressorInputStream = new GzipCompressorInputStream(inputStream);
@@ -54,7 +68,7 @@ public class MainClass {
                 PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
 
             if(processing == null)
-                processing = new MaxScore(process_data_flag, compress_data_flag, bm25, top_k);
+                processing = new MaxScore(process_data_flag, compress_data_flag, bm25);
 
 
             ScoreBoard results;
@@ -68,8 +82,8 @@ public class MainClass {
             String line;
             String[] lines;
             String result;
-
-            try (FileOutputStream fileOutputStream = new FileOutputStream("data/results.txt", false);
+            results_filename.append(".txt");
+            try (FileOutputStream fileOutputStream = new FileOutputStream(results_filename.toString(), false);
                  FileChannel fileChannel = fileOutputStream.getChannel()) {
 
                 while((line = br.readLine()) != null){
@@ -79,7 +93,7 @@ public class MainClass {
                     start_query = System.currentTimeMillis();
 
                     start_query = System.currentTimeMillis();
-                    results = processing.executeQuery(lines[1]);
+                    results = processing.executeQuery(lines[1], top_k);
                     time_elapsed_query = System.currentTimeMillis() - start_query;
                     total_time += time_elapsed_query;
 
@@ -95,6 +109,7 @@ public class MainClass {
             }
 
             System.out.println("Avg time: " + total_time / n_queries_issued);
+            // TODO - compute standard deviation
 
 
         } catch (IOException e) {

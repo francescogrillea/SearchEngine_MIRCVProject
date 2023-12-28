@@ -4,10 +4,10 @@ import java.nio.ByteBuffer;
 
 /**
  * The DocInfo class represents information associated with a document, including
- * a process ID (pid) and the length of the document.
+ * the original identifier and the length of the document.
  */
 public class DocInfo {
-    private final int pid;  // the process ID associated with the document
+    private final int pid;  // the original identifier of the document
     private final int length;   // the length of the document.
     static final int BYTES = Integer.BYTES + Integer.BYTES; // the number of bytes required to represent a serialized DocInfo object
 

@@ -17,12 +17,10 @@ import java.util.Collections;
 
 public class MaxScore implements QueryProcessing {
     private final ScoringInterface scoring;
-    private final ScoreBoard scoreBoard;
-
     private Lexicon lexicon;
     private final ContentParser parser;
 
-    public MaxScore(boolean process_data_flag, boolean compress_data_flag, boolean bm25, int top_k){
+    public MaxScore(boolean process_data_flag, boolean compress_data_flag, boolean bm25){
 
         if(!bm25)
             this.scoring = new TFIDF(DocIndexReader.basename_docindex);
@@ -31,7 +29,6 @@ public class MaxScore implements QueryProcessing {
 
         this.lexicon = LexiconReader.readLexicon("data/lexicon.bin");
         this.parser = new ContentParser("data/stop_words_english.txt", process_data_flag);
-        this.scoreBoard = new ScoreBoard(top_k);
 
         if(compress_data_flag)
             PostingListReader.setEncoder(new VBEncoder(), new UnaryEncoder());
@@ -40,11 +37,11 @@ public class MaxScore implements QueryProcessing {
     }
 
     @Override
-    public ScoreBoard executeQuery(String query) {
+    public ScoreBoard executeQuery(String query, int top_k) {
         List<String> query_terms = this.parser.processContent(query);
 
         List<PostingListBlockReader> postingReaders = new ArrayList<>();
-
+        ScoreBoard scoreBoard = new ScoreBoard(top_k);
         //List<TermEntry> termEntries = new ArrayList<>();
         // Add more TermEntry objects as needed
         // Sort the list by length in decreasing order
