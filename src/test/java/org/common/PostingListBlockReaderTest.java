@@ -30,7 +30,7 @@ public class PostingListBlockReaderTest {
         }catch(FileNotFoundException e){
             System.out.println(e.getMessage());
         }catch(IOException e){
-            System.out.println(e.getMessage()); //TODO: mettere try with resuorces
+            System.out.println(e.getMessage()); //TODO: mettere try with resuorces. capire perchè non va
         }
     }
 }
