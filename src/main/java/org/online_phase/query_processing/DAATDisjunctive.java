@@ -17,12 +17,11 @@ import java.util.List;
 public class DAATDisjunctive  implements QueryProcessing{
 
     private final ScoringInterface scoring;
-    private final ScoreBoard scoreBoard;
     private final Lexicon lexicon;
     private final ContentParser parser;
 
 
-    public DAATDisjunctive(boolean process_data_flag, boolean compress_data_flag, boolean bm25, int top_k) {
+    public DAATDisjunctive(boolean process_data_flag, boolean compress_data_flag, boolean bm25) {
 
         if(!bm25)
             this.scoring = new TFIDF(DocIndexReader.basename_docindex);
@@ -31,7 +30,6 @@ public class DAATDisjunctive  implements QueryProcessing{
 
         this.lexicon = LexiconReader.readLexicon("data/lexicon.bin");
         this.parser = new ContentParser("data/stop_words_english.txt", process_data_flag);
-        this.scoreBoard = new ScoreBoard(top_k);
 
         if(compress_data_flag)
             PostingListReader.setEncoder(new VBEncoder(), new UnaryEncoder());
@@ -41,7 +39,7 @@ public class DAATDisjunctive  implements QueryProcessing{
 
 
     @Override
-    public ScoreBoard executeQuery(String query) {
+    public ScoreBoard executeQuery(String query, int top_k) {
         List<String> query_terms = this.parser.processContent(query);
         System.out.println(query_terms);
 
@@ -49,7 +47,7 @@ public class DAATDisjunctive  implements QueryProcessing{
         int df;
         // store document frequencies for each query term to save time during the scoring function -> Object Size: 4bytes * n of query terms
         List<Integer> document_freqs = new ArrayList<>();   // TODO - capire se serve
-
+        ScoreBoard scoreBoard = new ScoreBoard(top_k);
 
         List<PostingListBlockReader> postingReaders = new ArrayList<>();
 

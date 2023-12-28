@@ -80,14 +80,6 @@ public class DocIndex {
         return buffer;
     }
 
-
-    /**
-     * Clears the DocIndex, removing all stored document information. Useful to save memory.
-     */
-    public void clear(){
-        this.docIndex.clear();
-    }
-
     /**
      * Returns a string representation of the DocIndex, mainly for debugging purposes.
      *

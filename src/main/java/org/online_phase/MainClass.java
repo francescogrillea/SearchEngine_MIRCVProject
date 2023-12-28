@@ -31,9 +31,9 @@ public class MainClass {
             if(arg.startsWith("-k"))
                 top_k = Integer.parseInt(arg.split("-k=")[1]);
             if(arg.startsWith("-mode=c"))
-                processing = new DAATConjunctive(process_data_flag, compress_data_flag, bm25, top_k);
+                processing = new DAATConjunctive(process_data_flag, compress_data_flag, bm25);
             else if(arg.startsWith("-mode=d"))
-                processing = new DAATDisjunctive(process_data_flag, compress_data_flag, bm25, top_k);
+                processing = new DAATDisjunctive(process_data_flag, compress_data_flag, bm25);
         }
 
         if(compress_data_flag)
@@ -42,7 +42,7 @@ public class MainClass {
             PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
 
         if(processing == null)
-            processing = new MaxScore(process_data_flag, compress_data_flag, bm25, top_k);
+            processing = new MaxScore(process_data_flag, compress_data_flag, bm25);
 
 
         Scanner scanner = new Scanner(System.in);
@@ -59,7 +59,7 @@ public class MainClass {
             userInput = scanner.nextLine();
 
             start_query = System.currentTimeMillis();
-            results = processing.executeQuery(userInput);
+            results = processing.executeQuery(userInput, top_k);
             time_elapsed_query = System.currentTimeMillis() - start_query;
             System.out.println(results);
             System.out.println("Time Elapsed: " + time_elapsed_query + "ms");

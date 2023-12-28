@@ -4,6 +4,6 @@ import org.online_phase.ScoreBoard;
 
 public interface QueryProcessing {
 
-    ScoreBoard executeQuery(String query);
+    ScoreBoard executeQuery(String query, int top_k);
 
 }
