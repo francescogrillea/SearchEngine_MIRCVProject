@@ -90,4 +90,8 @@ public class DocIndex {
         return "DocIndex{" + docIndex +
                 '}';
     }
+
+    public int getSize(){
+        return this.docIndex.size();
+    }
 }
