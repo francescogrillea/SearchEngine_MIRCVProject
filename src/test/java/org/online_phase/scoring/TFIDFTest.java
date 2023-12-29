@@ -11,18 +11,20 @@ public class TFIDFTest {
     @Test
     public void computeScore(){
         TFIDF tfidf = new TFIDF("data/doc_index.bin");
-        assertEquals(15.594462F,tfidf.computeScore(2,2,3),0.001);
-        //TODO: mettere un numero corretto, quando l'ho fatto c'erano meno documenti
+        assertEquals(25.9082946F,tfidf.computeScore(2,2,3),0.001);
+
     }
     @Test
     public void getTermUpperBound(){
         //check if the term manhattan has the correct term upper bound
         Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
         TermEntryList termEntryList = lexicon.get("manhattan");
-        EncoderInterface e_docid= new VBEncoder();
-        EncoderInterface e_freq= new UnaryEncoder(); //TODO sistemare sta roba
-        PostingListReader.setEncoder(e_docid,e_freq);
+
+        PostingListReader.setEncoder(new VBEncoder(),new UnaryEncoder());
         PostingList postingList = PostingListReader.readPostingList(termEntryList.getTermEntryList().get(0));
-        //System.out.println(postingList);
+        TFIDF tfidf = new TFIDF("data/doc_index.bin");
+        float termUpperBound = tfidf.getTermUpperBound(postingList);
+        assertEquals(25.543024F,termUpperBound,0.001);
+
     }
 }

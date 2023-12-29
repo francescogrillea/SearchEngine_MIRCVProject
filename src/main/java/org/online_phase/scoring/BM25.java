@@ -16,7 +16,7 @@ public class BM25 implements ScoringInterface{
     public BM25(String doc_index_filename) {
 
         this.N = DocIndexReader.readN(doc_index_filename);
-        System.out.println(this.N);
+
 
         this.dl = new int[this.N];
 

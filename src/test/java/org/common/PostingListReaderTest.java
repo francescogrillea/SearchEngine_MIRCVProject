@@ -14,18 +14,18 @@ import static org.junit.Assert.assertEquals;
 public class PostingListReaderTest {
     @Test
     public void readingTest(){
-        EncoderInterface e_docId = new VBEncoder();
-        EncoderInterface e_freq = new UnaryEncoder();
-        PostingListReader.setEncoder(e_docId,e_freq);
+
+        PostingListReader.setEncoder(new VBEncoder(),new UnaryEncoder());
 
         Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
 
         //try if we can read from index correctly
         PostingList manhattan = PostingListReader.readPostingList(lexicon.get("manhattan").getTermEntryList().get(0));
-        System.out.println(manhattan.getDoc_ids());
 
-        List<Integer> docIDsCorretti = Arrays.asList(0,0);
+        List<Integer> docIDsCorretti = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1192, 2091, 2749, 2751, 2867, 4678, 4679, 5083, 5088, 5345);
+        List<Integer> freqsCorrette = Arrays.asList(1, 1, 3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
 
-        assertArrayEquals(docIDsCorretti.toArray(),manhattan.getDoc_ids().toArray());
+        assertArrayEquals(docIDsCorretti.toArray(),manhattan.getDoc_ids().subList(0,20).toArray());
+        assertArrayEquals(freqsCorrette.toArray(),manhattan.getTerm_frequencies().subList(0,20).toArray());
     }
 }

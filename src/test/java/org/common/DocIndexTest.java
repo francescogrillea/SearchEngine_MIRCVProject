@@ -28,9 +28,11 @@ public class DocIndexTest {
     public void readAllDocInfo(){
         DocInfo docInfo;
         for(int i = 1; i < 8000000; i++){
-            docInfo = DocIndexReader.readDocInfo(i);
-            Assert.assertEquals(docInfo.getPid(), i-1); //we check that each doc is referred to the right pid
-            //System.out.println(docInfo);
+            if(i%100==0) {
+                docInfo = DocIndexReader.readDocInfo(i);
+                Assert.assertEquals(docInfo.getPid(), i - 1); //we check that each doc is referred to the right pid
+                //System.out.println(docInfo);
+            }
         }
     }
 

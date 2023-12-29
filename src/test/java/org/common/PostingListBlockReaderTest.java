@@ -21,12 +21,13 @@ public class PostingListBlockReaderTest {
             FileChannel fc = (new FileInputStream("data/index.bin")).getChannel();
             Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
             TermEntry t = lexicon.get("manhattan").getTermEntryList().get(0);
+            PostingListReader.setEncoder(new VBEncoder(),new UnaryEncoder());
             PostingListBlockReader pb = new PostingListBlockReader(t,"manhattan",true);
-            PostingListReader.setEncoder(new NoEncoder(),new NoEncoder());
+
             PostingList p= PostingListReader.readPostingList(t);
-            System.out.println(p);
+
             pb.readBlock();
-            System.out.println(pb.getDocID());
+
 
             for(int i = 0; i< p.getSize();i++){ //check sequentially
                 assertEquals(pb.getDocID(),p.getDocId(i));
@@ -38,7 +39,7 @@ public class PostingListBlockReaderTest {
         }catch(FileNotFoundException e){
             System.out.println(e.getMessage());
         }catch(IOException e){
-            System.out.println(e.getMessage()); //TODO: mettere try with resuorces. capire perchè non va sia qui che sotto
+            System.out.println(e.getMessage());
         }
     }
 
@@ -49,21 +50,22 @@ public class PostingListBlockReaderTest {
             FileChannel fc = (new FileInputStream("data/index.bin")).getChannel();
             Lexicon lexicon = LexiconReader.readLexicon("data/lexicon.bin");
             TermEntry t = lexicon.get("manhattan").getTermEntryList().get(0);
+            PostingListReader.setEncoder(new VBEncoder(), new UnaryEncoder());
             PostingListBlockReader pb = new PostingListBlockReader(t, "manhattan", true);
-            PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
+
             PostingList p = PostingListReader.readPostingList(t);
             pb.readBlock();
 
-            int[] indexes = new int[]{1,4,8};
+            int[] indexes = new int[]{2,4,8};
             for(int i=0; i<indexes.length; i++){
-                int docId= p.getDocId(i);
+                int docId= p.getDocId(indexes[i]);
                 assertEquals((int)pb.nextGEQ(docId),p.getTermFrequency(indexes[i]));
             }
 
         }catch(FileNotFoundException e){
             System.out.println(e.getMessage());
         }catch(IOException e){
-            System.out.println(e.getMessage()); //TODO: mettere try with resuorces. capire perchè non va
+            System.out.println(e.getMessage());
         }
     }
 
