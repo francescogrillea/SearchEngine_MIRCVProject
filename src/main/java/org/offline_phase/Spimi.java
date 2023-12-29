@@ -29,7 +29,7 @@ public class Spimi {
 
     private int doc_id_counter = 0;     // doc_id counter, useful for generating filenames
     private int chunk_id_counter = 0;   // chunk counter, useful for generating filenames
-    static final int  CHUNK_SIZE = 4;   // number of documents for each chunk. BE CAREFUL, IT DEPENDS ON YOUR MACHINE
+    static final int  CHUNK_SIZE = 15000;   // number of documents for each chunk. BE CAREFUL, IT DEPENDS ON YOUR MACHINE
     static Logger logger = Logger.getLogger(Spimi.class.getName());
     private final boolean process_data_flag;    // true if stopword removal and stemming must be applied
 
@@ -58,7 +58,7 @@ public class Spimi {
      */
     public void run(String collection_filepath){
 
-        ExecutorService threadpool = Executors.newFixedThreadPool(10);
+        ExecutorService threadpool = Executors.newFixedThreadPool(6);
 
         // read the collection.tar.gz in a buffered way
         try(FileInputStream inputStream = new FileInputStream(collection_filepath);
@@ -85,8 +85,19 @@ public class Spimi {
                     }
                 }while(doc_id_counter < CHUNK_SIZE * (chunk_id_counter+1) && line != null);
 
+                System.gc(); // commenta da qui se non hai bisogno del memory management
+                while(Runtime.getRuntime().freeMemory() < (Runtime.getRuntime().totalMemory() * 20 / 100)) {
+                    System.gc();
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+
                 // give each chunk to a thread
                 threadpool.submit(new ProcessChunkThread(chunk_text, chunk_id_counter, parser));
+
                 chunk_id_counter++;
             }while (line != null);
 
