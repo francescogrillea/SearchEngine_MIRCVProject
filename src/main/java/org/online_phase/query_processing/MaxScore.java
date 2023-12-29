@@ -17,7 +17,7 @@ import java.util.Collections;
 
 public class MaxScore implements QueryProcessing {
     private final ScoringInterface scoring;
-    private Lexicon lexicon;
+    private final Lexicon lexicon;
     private final ContentParser parser;
 
     public MaxScore(boolean process_data_flag, boolean compress_data_flag, boolean bm25){
@@ -26,6 +26,7 @@ public class MaxScore implements QueryProcessing {
             this.scoring = new TFIDF(DocIndexReader.basename_docindex);
         else
             this.scoring = new BM25(DocIndexReader.basename_docindex);
+        System.gc();
 
         this.lexicon = LexiconReader.readLexicon("data/lexicon.bin");
         this.parser = new ContentParser("data/stop_words_english.txt", process_data_flag);
@@ -42,13 +43,8 @@ public class MaxScore implements QueryProcessing {
 
         List<PostingListBlockReader> postingReaders = new ArrayList<>();
         ScoreBoard scoreBoard = new ScoreBoard(top_k);
-        //List<TermEntry> termEntries = new ArrayList<>();
-        // Add more TermEntry objects as needed
-        // Sort the list by length in decreasing order
-
 
         try{
-            //ogni postinglist block reader avrà anche un campo per il suo tf upper bound che viene assegnato in questa fase
             TermEntry termEntry;
 
             for (String word : query_terms){
@@ -103,7 +99,7 @@ public class MaxScore implements QueryProcessing {
                         df = postingReaders.get(i).getDocumentFrequency();
 
                         if(scoring instanceof BM25)
-                            score += scoring.computeScore(tf, df, DocIndexReader.readDocInfo(postingReaders.get(i).getDocID()).getLength());
+                            score += scoring.computeScore(tf, df, ((BM25) scoring).getDl(min_docID - 1));
                         else
                             score += scoring.computeScore(tf, df);
 
@@ -125,7 +121,7 @@ public class MaxScore implements QueryProcessing {
                     df = postingReaders.get(i).getDocumentFrequency();
 
                     if(scoring instanceof BM25)
-                        score += scoring.computeScore(tf, df, DocIndexReader.readDocInfo(postingReaders.get(i).getDocID()).getLength());
+                        score += scoring.computeScore(tf, df, ((BM25) scoring).getDl(postingReaders.get(i).getDocID() - 1));
                     else
                         score += scoring.computeScore(tf, df);
                 }

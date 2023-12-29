@@ -92,6 +92,39 @@ public class DocIndexReader {
         return docInfo;
     }
 
+
+    /**
+     * Retrieves a list of document legnths.
+     * The method reads the lengths from the file, assuming each length is stored as a 32-bit integer.
+     * The lengths are stored in a List and returned.
+     *
+     * @return A List of integers representing lengths read from the file.
+     */
+    public static List<Integer> getLengths(){
+        List<Integer> lengths = new ArrayList<>();
+
+        try (FileInputStream docIndexFileInputStream = new FileInputStream(basename_docindex);
+             FileChannel docIndexFileChannel = docIndexFileInputStream.getChannel()) {
+
+            ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES);
+            long current_position;
+            while (docIndexFileChannel.position() < docIndexFileChannel.size()){
+                current_position = docIndexFileChannel.position();
+                docIndexFileChannel.position(current_position + 2 * Integer.BYTES);
+
+                docIndexFileChannel.read(buffer);
+                buffer.flip();
+
+                lengths.add(buffer.getInt());
+                buffer.clear();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return lengths;
+    }
+
     /**
      * Retrieves pids for a list of document IDs from the primary DocIndex file.
      *

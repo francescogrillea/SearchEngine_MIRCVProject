@@ -81,6 +81,13 @@ public class DocIndex {
     }
 
     /**
+     * Clear the DocIndex to save space
+     */
+    public void clear() {
+        this.docIndex.clear();
+    }
+
+    /**
      * Returns a string representation of the DocIndex, mainly for debugging purposes.
      *
      * @return A string representation of the DocIndex.
@@ -94,4 +101,5 @@ public class DocIndex {
     public int getSize(){
         return this.docIndex.size();
     }
+
 }

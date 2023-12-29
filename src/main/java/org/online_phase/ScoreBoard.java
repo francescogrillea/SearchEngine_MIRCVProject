@@ -70,6 +70,7 @@ public class ScoreBoard{
     public void setDoc_ids(List<Integer> doc_ids) {
         this.doc_ids = doc_ids;
     }
+
     public float getThreshold(){
         return this.threshold;
     }
@@ -81,7 +82,7 @@ public class ScoreBoard{
             return "No relevant document found according to the chosen criterion";
 
         StringBuilder result = new StringBuilder();
-        result.append("Top " + this.MAX_RESULTS + " results: {\n");
+        result.append("Top ").append(this.MAX_RESULTS).append(" results: {\n");
 
         result.append("\t").append(this.doc_ids).append("\n");
         result.append("\t").append(this.scores).append("\n");

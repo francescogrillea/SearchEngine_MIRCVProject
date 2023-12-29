@@ -2,10 +2,6 @@ package org.online_phase.scoring;
 
 import org.common.DocIndexReader;
 import org.common.PostingList;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 
 public class TFIDF implements ScoringInterface{
 

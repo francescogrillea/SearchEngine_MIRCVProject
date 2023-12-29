@@ -1,7 +1,9 @@
 package org.online_phase.query_processing;
 
 import org.common.*;
-import org.common.encoding.*;
+import org.common.encoding.NoEncoder;
+import org.common.encoding.UnaryEncoder;
+import org.common.encoding.VBEncoder;
 import org.offline_phase.ContentParser;
 import org.online_phase.ScoreBoard;
 import org.online_phase.scoring.BM25;
@@ -24,6 +26,7 @@ public class DAATConjunctive implements QueryProcessing{
             this.scoring = new TFIDF(DocIndexReader.basename_docindex);
         else
             this.scoring = new BM25(DocIndexReader.basename_docindex);
+        System.gc();
 
         this.lexicon = LexiconReader.readLexicon("data/lexicon.bin");
         this.parser = new ContentParser("data/stop_words_english.txt", process_data_flag);
@@ -37,25 +40,30 @@ public class DAATConjunctive implements QueryProcessing{
 
     @Override
     public ScoreBoard executeQuery(String query, int top_k) {
-        List<String> query_terms = this.parser.processContent(query);    // TODO - può essere utile fare un query term index?
+        List<String> query_terms = this.parser.processContent(query);
+        System.out.println(query_terms);
+
         int tf;
         int df;
         // store document frequencies for each query term to save time during the scoring function -> Object Size: 4bytes * n of query terms
-        List<Integer> document_freqs = new ArrayList<>();
+        List<Integer> document_freqs = new ArrayList<>();   // TODO - capire se serve
         ScoreBoard scoreBoard = new ScoreBoard(top_k);
 
         List<PostingListBlockReader> postingReaders = new ArrayList<>();
 
         try{
+
             // init posting readers
             TermEntry termEntry;
             for (String word : query_terms){
                 try{
                     termEntry = lexicon.get(word).getTermEntryList().get(0);
-                    postingReaders.add(new PostingListBlockReader(termEntry, word,scoring instanceof BM25));
+                    postingReaders.add(new PostingListBlockReader(termEntry, word, scoring instanceof BM25));
                     document_freqs.add(termEntry.getDocument_frequency());
                 }catch (NullPointerException e){
+                    // TODO - if query term not exists, return a empty lists
                     System.out.println("Word " + word + " not found in lexicon");
+                    return scoreBoard;
                 }
             }
 
@@ -63,9 +71,9 @@ public class DAATConjunctive implements QueryProcessing{
             if(postingReaders.size() == 0)
                 return null;
 
-            int min_docID;
+            int max_docID;
             float score;
-            List<PostingListBlockReader> to_delete = new ArrayList<>();
+            List<PostingListReader> to_delete = new ArrayList<>();
 
             int df_index = 0;
             int df_size = document_freqs.size();
@@ -74,30 +82,28 @@ public class DAATConjunctive implements QueryProcessing{
             for(PostingListBlockReader reader : postingReaders)
                 reader.readBlock();
 
-            // iterate over all the blocks of the query posting list
-            while(postingReaders.size() != 0){
+            while (postingReaders.size() != 0){
+                max_docID = -1;
 
-                min_docID = Integer.MAX_VALUE;
+                boolean all_equals = true;
 
-                // find the min doc_id for each block
-                for(PostingListBlockReader reader : postingReaders)
-                    if(reader.getDocID() < min_docID)
-                        min_docID = reader.getDocID();
+                int doc_id = postingReaders.get(0).getDocID();
+
+                for(PostingListBlockReader reader : postingReaders) {
+                    if (reader.getDocID() > max_docID)
+                        max_docID = reader.getDocID();
+
+                    if (reader.getDocID() != doc_id)
+                        all_equals = false;
+                }
 
                 score = 0;
-                df_index = 0;
                 to_delete.clear();
 
+                if(all_equals){
 
-                /*
-                    TODO - posting list block reader ha dentro un'instanza di PostingList
-                        si, ma forse sarebbe piu' corretto / carino fare una lista di PostingList ottenute
-                        tramite PostingListReader.readBlock() ->>>
-                 */
-                for (PostingListBlockReader block : postingReaders) {
-
-                    // compute score for the following doc_id
-                    if (block.getDocID() == min_docID) {
+                    // compute score
+                    for (PostingListBlockReader block : postingReaders){
 
                         tf = block.getTermFreq();
                         df = document_freqs.get(df_index);
@@ -106,27 +112,41 @@ public class DAATConjunctive implements QueryProcessing{
                         if(scoring instanceof TFIDF)        // TODO - non mi piace sta scrittura
                             score += scoring.computeScore(tf, df);
                         else
-                            score += scoring.computeScore(tf, df, DocIndexReader.readDocInfo(block.getDocID()).getLength());    // TODO - il docIndex vorrei non caricarlo in memoria
+                            score += scoring.computeScore(tf, df, ((BM25) scoring).getDl(block.getDocID() - 1));
+                            // score += scoring.computeScore(tf, df, DocIndexReader.readDocInfo(block.getDocID()).getLength());    // troppo macchioso, fare thipo BM25.dl.get(index)
 
+                        // move to the next posting and check if there's still posting to read
                         if(!block.nextPosting()){
                             block.close();
                             to_delete.add(block);
                         }
+                        df_index = (df_index + 1) % df_size;
                     }
-                    df_index = (df_index + 1) % df_size;
-                }
-                postingReaders.removeAll(to_delete);
-                df_size -= to_delete.size();    // TODO - controllare se effettivamente va bene
+                    scoreBoard.add(max_docID, score);
 
-                // save tuple <doc_id, score>
-                scoreBoard.add(min_docID, score);
+                }
+                else{
+                    for (PostingListBlockReader block : postingReaders)
+                        if(block.getDocID() < max_docID){
+
+                            // move to the next posting and check if there's still posting to read
+                            if(!block.nextPosting()){
+                                block.close();
+                                to_delete.add(block);
+                            }
+                        }
+                }
+                if(to_delete.size() > 0)
+                    break;
             }
+
         }catch (IOException e){
             e.printStackTrace();
         }
+
         scoreBoard.clip();
         scoreBoard.setDoc_ids(DocIndexReader.getPids(scoreBoard.getDoc_ids()));
+
         return scoreBoard;
     }
-
 }

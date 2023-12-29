@@ -1,5 +1,6 @@
 package org.online_phase.scoring;
 
+import org.common.DocIndex;
 import org.common.DocIndexReader;
 import org.common.PostingList;
 import java.util.ArrayList;
@@ -9,20 +10,29 @@ public class BM25 implements ScoringInterface{
 
     private final int N;
     private final int avdl;
-    private final List<Integer> dl;
+    //private final List<Integer> dl;
+    private final int[] dl;
 
     public BM25(String doc_index_filename) {
 
         this.N = DocIndexReader.readN(doc_index_filename);
-        this.dl = new ArrayList<>();
+        System.out.println(this.N);
+
+        this.dl = new int[this.N];
+
+        // Load the whole docIndex in memory to compute DL and ADVL, then remove it to save space
+        DocIndex doc_index = DocIndexReader.readDocIndex(doc_index_filename);
 
         int sum = 0;
         int length;
         for (int i = 1; i <= this.N; i++) {
-            length = DocIndexReader.readDocInfo(i).getLength();
+            length = doc_index.get(i).getLength();
             sum += length;
-            this.dl.add(length);
+            this.dl[i-1] = length;
         }
+        doc_index.clear();
+        doc_index = null;
+        System.gc();
 
         this.avdl = sum / this.N;
     }
@@ -34,7 +44,7 @@ public class BM25 implements ScoringInterface{
         float result;
 
         for (int i = 0; i < postingList.getSize(); i++){
-            result = computeScore(postingList.getTermFrequency(i), postingList.getSize(), this.dl.get(postingList.getDocId(i)-1));
+            result = computeScore(postingList.getTermFrequency(i), postingList.getSize(), this.dl[postingList.getDocId(i)-1]);
             if (result > upper_bound) {
                 upper_bound = result;
             }
@@ -56,5 +66,9 @@ public class BM25 implements ScoringInterface{
         float log = (float) Math.log((float) this.N / df);
 
         return tf / denominator * log;
+    }
+
+    public int getDl(int i) {
+        return this.dl[i];
     }
 }

@@ -90,7 +90,6 @@ public class MainClass {
 
                     lines = line.split("\t");
                     System.out.println(lines[1]);
-                    start_query = System.currentTimeMillis();
 
                     start_query = System.currentTimeMillis();
                     results = processing.executeQuery(lines[1], top_k);
