@@ -50,7 +50,9 @@ java -cp target/SearchEngine_Project-1.0-SNAPSHOT.jar org.online_phase.MainClass
 ```
 [-p] apply stemming and stopword removal 
 [-c] index compression
-[-s=bm25] use BM25 scoring function
 [-k=20] retrieve the top 20 document
+[-s=bm25] use BM25 scoring function (otherwise TFIDF will be applied)
+[-mode=c] use DAAT in conjunctive mode
+[-mode=d] use DAAT in disjunctive mode (if no mode is specified, MaxScore si used
 ```
 ## Evaluation using TrecEval
