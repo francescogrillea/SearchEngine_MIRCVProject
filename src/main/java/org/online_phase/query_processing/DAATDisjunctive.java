@@ -11,11 +11,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The DAATDisjunctive class implements the Document-At-A-Time (DAAT) disjunctive query processing
+ * for retrieving top-k documents based on a given query using a specified scoring mechanism.
+ * It supports both TF-IDF and BM25 scoring methods and provides the results in the form of a ScoreBoard.
+ */
 public class DAATDisjunctive implements QueryProcessing{
 
-    private final ScoringInterface scoring;
-    private final Lexicon lexicon;
-    private final ContentParser parser;
+    private final ScoringInterface scoring; // to compute scores for document-query matches
+    private final Lexicon lexicon;      // containing information about terms in the document collection
+    private final ContentParser parser;     // used to process and tokenize content, including stop-word removal
 
 
     public DAATDisjunctive(boolean process_data_flag, boolean compress_data_flag, boolean bm25) {
@@ -35,14 +40,23 @@ public class DAATDisjunctive implements QueryProcessing{
             PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
     }
 
-
+    /**
+     * Executes a DAAT disjunctive query using the specified query string and retrieves the top-k results.
+     *
+     * @param query The query string to be processed.
+     * @param top_k The number of top results to retrieve.
+     * @return A ScoreBoard containing the top-k document IDs and their corresponding scores.
+     */
     @Override
     public ScoreBoard executeQuery(String query, int top_k) {
+
+        // process query content
         List<String> query_terms = this.parser.processContent(query);
         int tf;
         int df;
-        // store document frequencies for each query term to save time during the scoring function -> Object Size: 4bytes * n of query terms
+        // store document frequencies for each query term to save time during the scoring function -> Object Size: 20 bytes * n of query terms -> negligible
         List<Integer> document_freqs = new ArrayList<>();
+        // initialize a ScoreBoard to store the top k documents retrieved
         ScoreBoard scoreBoard = new ScoreBoard(top_k);
 
         List<PostingListBlockReader> postingReaders = new ArrayList<>();
@@ -62,7 +76,7 @@ public class DAATDisjunctive implements QueryProcessing{
 
             // if no words have been written or no words found in lexicon
             if(postingReaders.size() == 0)
-                return null;
+                return scoreBoard;
 
             int min_docID;
             float score;
@@ -97,13 +111,11 @@ public class DAATDisjunctive implements QueryProcessing{
 
                         tf = block.getTermFreq();
                         df = document_freqs.get(df_index);
-                        //df = lexicon.get(block.getTerm()).getTermEntryList().get(0).getDocument_frequency();
 
-                        if(scoring instanceof TFIDF)        // TODO - non mi piace sta scrittura
+                        if(scoring instanceof TFIDF)
                             score += scoring.computeScore(tf, df);
                         else
                             score += scoring.computeScore(tf, df, ((BM25) scoring).getDl(block.getDocID() - 1));
-                        // score += scoring.computeScore(tf, df, DocIndexReader.readDocInfo(block.getDocID()).getLength());    // TODO - il docIndex vorrei non caricarlo in memoria
 
                         if(!block.nextPosting()){
                             block.close();
@@ -113,7 +125,7 @@ public class DAATDisjunctive implements QueryProcessing{
                     df_index = (df_index + 1) % df_size;
                 }
                 postingReaders.removeAll(to_delete);
-                df_size -= to_delete.size();    // TODO - controllare se effettivamente va bene
+                df_size -= to_delete.size();
 
                 // save tuple <doc_id, score>
                 scoreBoard.add(min_docID, score);

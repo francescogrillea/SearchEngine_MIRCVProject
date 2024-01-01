@@ -3,15 +3,25 @@ package org.online_phase.scoring;
 import org.common.DocIndexReader;
 import org.common.PostingList;
 
+/**
+ * The TFIDF class implements the ScoringInterface and provides methods for scoring
+ * documents using the Term Frequency-Inverse Document Frequency (TFIDF) formula.
+ */
 public class TFIDF implements ScoringInterface{
 
-    private final int N;
+    private final int N;    // total number of documents in the collection
 
     public TFIDF(String doc_index_filename) {
 
         this.N = DocIndexReader.readN(doc_index_filename);
     }
 
+    /**
+     * Computes and returns the upper bound of the TFIDF scores for a given PostingList.
+     *
+     * @param postingList The PostingList for which to calculate the upper bound.
+     * @return The upper bound of TFIDF scores for the PostingList.
+     */
     @Override
     public float getTermUpperBound(PostingList postingList) {
 
@@ -30,6 +40,13 @@ public class TFIDF implements ScoringInterface{
         return upper_bound;
     }
 
+    /**
+     * Computes and returns the TFIDF score based on the given term frequency (tf)
+     * and document frequency (df) using the TFIDF formula.
+     *
+     * @param parameters An array of integers representing term frequency (tf) and document frequency (df).
+     * @return The computed TFIDF score.
+     */
     @Override
     public float computeScore(int... parameters) {
 

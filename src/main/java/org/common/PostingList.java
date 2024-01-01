@@ -193,7 +193,6 @@ public class PostingList {
      */
     public void initPointers(){
         this.block_size = (int) Math.ceil(Math.sqrt(this.doc_ids.size()));
-
         for (int i = block_size; i < this.doc_ids.size(); i = i+block_size){
             this.skipping_points.add(new SkippingPointer(this.doc_ids.get(i - 1)));
         }

@@ -9,16 +9,19 @@ import org.online_phase.ScoreBoard;
 import org.online_phase.scoring.BM25;
 import org.online_phase.scoring.ScoringInterface;
 import org.online_phase.scoring.TFIDF;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 
+/**
+ * The MaxScore class implements the maximum scoring strategy. It uses a scoring method,
+ * lexicon, and content parser to process and score documents according to the given query.
+ */
 public class MaxScore implements QueryProcessing {
-    private final ScoringInterface scoring;
-    private final Lexicon lexicon;
-    private final ContentParser parser;
+    private final ScoringInterface scoring; // to compute scores for document-query matches
+    private final Lexicon lexicon;      // containing information about terms in the document collection
+    private final ContentParser parser;     // used to process and tokenize content, including stop-word removal
 
     public MaxScore(boolean process_data_flag, boolean compress_data_flag, boolean bm25){
 
@@ -37,16 +40,27 @@ public class MaxScore implements QueryProcessing {
             PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
     }
 
+    /**
+     * Executes a query and retrieves a ScoreBoard containing the top-k documents based on the
+     * maximum scoring strategy.
+     *
+     * @param query   The input query string.
+     * @param top_k   The number of top documents to retrieve.
+     * @return        A ScoreBoard containing the top-k documents.
+     */
     @Override
     public ScoreBoard executeQuery(String query, int top_k) {
-        List<String> query_terms = this.parser.processContent(query);
 
-        List<PostingListBlockReader> postingReaders = new ArrayList<>();
+        // process query content
+        List<String> query_terms = this.parser.processContent(query);
+        // initialize a ScoreBoard to store the top k documents retrieved
         ScoreBoard scoreBoard = new ScoreBoard(top_k);
 
-        try{
-            TermEntry termEntry;
+        List<PostingListBlockReader> postingReaders = new ArrayList<>();
 
+        try{
+            // init posting readers
+            TermEntry termEntry;
             for (String word : query_terms){
                 try{
                     termEntry = lexicon.get(word).getTermEntryList().get(0);
@@ -56,9 +70,11 @@ public class MaxScore implements QueryProcessing {
                 }
             }
 
+            // if no words have been written or no words found in lexicon
             if(postingReaders.isEmpty())
-                return null;
+                return scoreBoard;
 
+            // sort all PostingBlockReaders in order of termUpperBound
             Collections.sort(postingReaders, (entry1, entry2) -> Float.compare(entry1.getTermUpperBound(), entry2.getTermUpperBound()));
 
             // accumulated upper bounds
@@ -126,13 +142,14 @@ public class MaxScore implements QueryProcessing {
                         score += scoring.computeScore(tf, df);
                 }
 
+                // remove all closed readers
                 postingReaders.removeAll(to_delete);
                 to_delete.clear();
 
                 // if doc_id can be added to ScoreBoard (MinHeap)
                 if(scoreBoard.add(min_docID,score)){
 
-                    // pivot = 0; // why?
+                    pivot = 0;
                     while(pivot < postingReaders.size() && postingReaders.get(pivot).getTermUpperBound() <= scoreBoard.getThreshold())
                         pivot++;
                 }

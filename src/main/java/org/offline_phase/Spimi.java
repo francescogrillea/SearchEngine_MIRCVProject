@@ -13,10 +13,13 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * The Spimi (Single-Pass In-Memory Indexing) processes a collection of documents,
@@ -29,7 +32,7 @@ public class Spimi {
 
     private int doc_id_counter = 0;     // doc_id counter, useful for generating filenames
     private int chunk_id_counter = 0;   // chunk counter, useful for generating filenames
-    static final int  CHUNK_SIZE = 25000;   // number of documents for each chunk. BE CAREFUL, IT DEPENDS ON YOUR MACHINE
+    static final int  CHUNK_SIZE = 20000;   // number of documents for each chunk. BE CAREFUL, IT DEPENDS ON YOUR MACHINE
     static Logger logger = Logger.getLogger(Spimi.class.getName());
     private final boolean process_data_flag;    // true if stopword removal and stemming must be applied
 
@@ -128,11 +131,15 @@ public class Spimi {
         File lexicon_directory = new File(LexiconReader.basename_intermediate_lexicon);
 
         File[] lexicon_files = lexicon_directory.listFiles();
+        List<String> sortedFilenames = Arrays.stream(lexicon_files)
+                .map(File::getName)
+                .sorted() // Sort filenames
+                .collect(Collectors.toList());
 
         long start_time = System.currentTimeMillis();
         // merge all intermediate lexicon to create a unique one
-        for (File lexiconFile : lexicon_files) {
-            current_lexicon = LexiconReader.readLexicon(LexiconReader.basename_intermediate_lexicon + lexiconFile.getName());
+        for (String lexiconFile : sortedFilenames) {
+            current_lexicon = LexiconReader.readLexicon(LexiconReader.basename_intermediate_lexicon + lexiconFile);
             merged_lexicon.merge(current_lexicon);
         }
         logger.info("Intermediate Lexicons merged in " + (System.currentTimeMillis() - start_time)/1000.0 + "s");
@@ -141,13 +148,19 @@ public class Spimi {
         // merge all intermediate DocIndex to create a unique one
         File docindex_directory = new File(DocIndexReader.basename_intermediate_docindex);
         File[] docindex_files = docindex_directory.listFiles();
+
+        List<String> sortedDocIndexFilenames = Arrays.stream(docindex_files)
+                .map(File::getName)
+                .sorted() // Sort filenames
+                .collect(Collectors.toList());
+
         start_time = System.currentTimeMillis();
         try (FileOutputStream indexFileOutputStream = new FileOutputStream(DocIndexReader.basename + "doc_index.bin", false);
              FileChannel docIndexFileChannel = indexFileOutputStream.getChannel()) {
 
-            for(File docIndex_file : docindex_files){
+            for(String docIndex_file : sortedDocIndexFilenames){
 
-                try (FileInputStream indexFileInputStream = new FileInputStream(DocIndexReader.basename_intermediate_docindex + docIndex_file.getName());
+                try (FileInputStream indexFileInputStream = new FileInputStream(DocIndexReader.basename_intermediate_docindex + docIndex_file);
                      FileChannel docIndex_intermediate_FileChannel = indexFileInputStream.getChannel()) {
 
                     long size = docIndex_intermediate_FileChannel.size();
@@ -177,8 +190,14 @@ public class Spimi {
             ArrayList<FileInputStream> fileInputStreams = new ArrayList<>();
             File index_directory = new File(PostingListReader.basename_intermediate_index);
             File[] indexFiles = index_directory.listFiles();
-            for(File indexFile : indexFiles){
-                fileInputStreams.add(new FileInputStream(PostingListReader.basename_intermediate_index + indexFile.getName()));
+
+            List<String> sortedIndexFilenames = Arrays.stream(indexFiles)
+                    .map(File::getName)
+                    .sorted() // Sort filenames
+                    .collect(Collectors.toList());
+
+            for(String indexFile : sortedIndexFilenames){
+                fileInputStreams.add(new FileInputStream(PostingListReader.basename_intermediate_index + indexFile));
             }
 
             ArrayList<FileChannel> fileChannels = new ArrayList<>();

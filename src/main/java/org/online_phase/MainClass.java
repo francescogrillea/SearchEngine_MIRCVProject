@@ -30,10 +30,6 @@ public class MainClass {
                 bm25 = true;
             if(arg.startsWith("-k"))
                 top_k = Integer.parseInt(arg.split("-k=")[1]);
-            if(arg.startsWith("-mode=c"))
-                processing = new DAATConjunctive(process_data_flag, compress_data_flag, bm25);
-            else if(arg.startsWith("-mode=d"))
-                processing = new DAATDisjunctive(process_data_flag, compress_data_flag, bm25);
         }
 
         if(compress_data_flag)
@@ -41,8 +37,6 @@ public class MainClass {
         else
             PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
 
-        if(processing == null)
-            processing = new MaxScore(process_data_flag, compress_data_flag, bm25);
 
 
         Scanner scanner = new Scanner(System.in);
@@ -54,16 +48,37 @@ public class MainClass {
 
         System.out.println("Initializing Query Processing System");
 
+        // execute queries in all three different modes
+        DAATConjunctive daatConjunctive = new DAATConjunctive(process_data_flag, compress_data_flag, bm25);
+        DAATDisjunctive daatDisjunctive = new DAATDisjunctive(process_data_flag, compress_data_flag, bm25);
+        MaxScore maxScore = new MaxScore(process_data_flag, compress_data_flag, bm25);
+
         do{
             System.out.print("> ");
+            // read user input
             userInput = scanner.nextLine();
 
             start_query = System.currentTimeMillis();
-            results = processing.executeQuery(userInput, top_k);
+            results = daatConjunctive.executeQuery(userInput, top_k);
             time_elapsed_query = System.currentTimeMillis() - start_query;
             System.out.println(results);
             System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
             System.out.println("\n");
+
+            start_query = System.currentTimeMillis();
+            results = daatDisjunctive.executeQuery(userInput, top_k);
+            time_elapsed_query = System.currentTimeMillis() - start_query;
+            System.out.println(results);
+            System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
+            System.out.println("\n");
+
+            start_query = System.currentTimeMillis();
+            results = maxScore.executeQuery(userInput, top_k);
+            time_elapsed_query = System.currentTimeMillis() - start_query;
+            System.out.println(results);
+            System.out.println("Time Elapsed: " + time_elapsed_query + "ms");
+            System.out.println("\n");
+
         }while (!userInput.equals(terminationSequence));
 
         scanner.close();

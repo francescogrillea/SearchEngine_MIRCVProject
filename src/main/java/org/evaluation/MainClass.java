@@ -15,6 +15,8 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainClass {
@@ -25,6 +27,7 @@ public class MainClass {
         boolean compress_data_flag = false; // true if data compression techniques must be applied
         boolean bm25 = false;
         int top_k = 10;
+        String mode = "max_score";
         QueryProcessing processing = null;
         StringBuilder results_filename = new StringBuilder();
         results_filename.append("data/evaluation/results");
@@ -47,11 +50,11 @@ public class MainClass {
                 results_filename.append("-k=").append(top_k);
             }
             if(arg.startsWith("-mode=c")){
-                processing = new DAATConjunctive(process_data_flag, compress_data_flag, bm25);
+                mode = "conj";
                 results_filename.append("-conj");
             }
             else if(arg.startsWith("-mode=d")){
-                processing = new DAATDisjunctive(process_data_flag, compress_data_flag, bm25);
+                mode = "disj";
                 results_filename.append("-disj");
             }
         }
@@ -67,18 +70,29 @@ public class MainClass {
             else
                 PostingListReader.setEncoder(new NoEncoder(), new NoEncoder());
 
-            if(processing == null)
-                processing = new MaxScore(process_data_flag, compress_data_flag, bm25);
+            // select DAAT type or MaxScore
+            switch (mode) {
+                case "max_score":
+                    processing = new MaxScore(process_data_flag, compress_data_flag, bm25);
+                    break;
+                case "disj":
+                    processing = new DAATDisjunctive(process_data_flag, compress_data_flag, bm25);
+                    break;
+                case "conj":
+                    processing = new DAATConjunctive(process_data_flag, compress_data_flag, bm25);
+                    break;
+                default:
+                    return;
+            }
 
 
             ScoreBoard results;
             long start_query;
             long time_elapsed_query;
-            long total_time = 0;
+            List<Integer> times = new ArrayList<>();
 
             System.out.println("Initializing Query Processing System");
 
-            int n_queries_issued = 0;
             String line;
             String[] lines;
             String result;
@@ -94,26 +108,42 @@ public class MainClass {
                     start_query = System.currentTimeMillis();
                     results = processing.executeQuery(lines[1], top_k);
                     time_elapsed_query = System.currentTimeMillis() - start_query;
-                    total_time += time_elapsed_query;
+                    times.add((int) time_elapsed_query);
 
                     for(int i = 0; i < results.getDoc_ids().size(); i++){
                         result = lines[0] + " Q0 " + results.getDoc_ids().get(i) + " " + (i+1) + " " + results.getScores().get(i) + " STANDARD\n";
                         fileChannel.write(ByteBuffer.wrap(result.getBytes()));
                     }
-
-                    n_queries_issued++;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            System.out.println("Avg time: " + total_time / n_queries_issued);
-            // TODO - compute standard deviation
+            double mean = computeMean(times);
+            double stdev = computeStdev(times, mean);
+
+            System.out.println(results_filename + "\t Mean:  " + mean + "\t Stdev: " + stdev);
 
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
+    }
+
+    private static double computeMean(List<Integer> values) {
+        double sum = 0.0;
+        for (double value : values) {
+            sum += value;
+        }
+        return sum / values.size();
+    }
+
+    private static double computeStdev(List<Integer> values, double mean) {
+        double sumSquaredDiff = 0.0;
+        for (double value : values) {
+            sumSquaredDiff += Math.pow(value - mean, 2);
+        }
+        return Math.sqrt(sumSquaredDiff / values.size());
     }
 }

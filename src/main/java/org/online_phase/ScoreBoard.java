@@ -3,12 +3,17 @@ package org.online_phase;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The ScoreBoard class represents a scoreboard for tracking document IDs and corresponding scores.
+ * It maintains a sorted list of document IDs and scores, limiting the number of entries to a specified
+ * maximum value (k). The scoreboard can be used to store and retrieve top-ranked documents based on their scores.
+ */
 public class ScoreBoard{
 
-    private List<Integer> doc_ids;
-    private List<Float> scores;
-    private final int MAX_RESULTS;
-    private float threshold;
+    private List<Integer> doc_ids;  // the doc_ids of the top results
+    private List<Float> scores;     // the score associated to the relative doc_ids of the top results
+    private final int MAX_RESULTS;  // k - maximum number of results to be returned
+    private float threshold;        // the minimum score stored in the scoreboard
 
     public ScoreBoard(int max_result) {
         this.doc_ids = new ArrayList<>();
@@ -17,6 +22,15 @@ public class ScoreBoard{
         this.threshold = 0;
     }
 
+    /**
+     * Adds a document ID and its corresponding score to the scoreboard.
+     * The method ensures that the scoreboard remains sorted in descending order of scores
+     * and limits the number of entries to the specified maximum.
+     *
+     * @param doc_id The document ID to be added.
+     * @param score  The score corresponding to the document ID.
+     * @return true if the addition is successful, false otherwise.
+     */
     public boolean add(int doc_id, float score){
 
 
@@ -38,20 +52,13 @@ public class ScoreBoard{
             this.threshold=this.scores.get(MAX_RESULTS-1);
         }
         return true;
-        // TODO - valutare se eliminare l'ultimo elemento o clippare dopo
     }
 
+    /**
+     * Clips the scoreboard to ensure it contains at most the maximum number of results.
+     * If the number of entries exceeds the maximum, the extra entries are removed.
+     */
     public void clip(){
-
-//        int prev = 0;
-//        int curr = 0;
-//        for(int doc_id : this.doc_ids){
-//            prev = curr;
-//            curr = doc_id;
-//            if(curr < prev)
-//                System.out.println("No order between them\t" + curr + "=" + prev);
-//
-//        }
 
         if(this.doc_ids.size() > MAX_RESULTS){
             this.doc_ids = this.doc_ids.subList(0, MAX_RESULTS);
@@ -89,7 +96,5 @@ public class ScoreBoard{
 
         result.append("}");
         return result.toString();
-
-
     }
 }

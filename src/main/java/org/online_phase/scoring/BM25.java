@@ -3,21 +3,23 @@ package org.online_phase.scoring;
 import org.common.DocIndex;
 import org.common.DocIndexReader;
 import org.common.PostingList;
-import java.util.ArrayList;
-import java.util.List;
 
+
+/**
+ * The BM25 class implements the ScoringInterface and provides methods for scoring
+ * documents using the BM25 algorithm, a relevance ranking function used in information
+ * retrieval. BM25 takes into account the term frequency, document frequency, and document
+ * length to compute a relevance score.
+ */
 public class BM25 implements ScoringInterface{
 
-    private final int N;
-    private final int avdl;
-    //private final List<Integer> dl;
-    private final int[] dl;
+    private final int N;    // total number of documents in the collection
+    private final int avdl; // average document length in the collection
+    private final int[] dl; // an array storing the document lengths for each document
 
     public BM25(String doc_index_filename) {
 
         this.N = DocIndexReader.readN(doc_index_filename);
-
-
         this.dl = new int[this.N];
 
         // Load the whole docIndex in memory to compute DL and ADVL, then remove it to save space
@@ -37,6 +39,12 @@ public class BM25 implements ScoringInterface{
         this.avdl = sum / this.N;
     }
 
+    /**
+     * Computes and returns the upper bound of the BM25 scores for a given PostingList.
+     *
+     * @param postingList The PostingList for which to calculate the upper bound.
+     * @return The upper bound of BM25 scores for the PostingList.
+     */
     @Override
     public float getTermUpperBound(PostingList postingList) {
 
@@ -53,6 +61,14 @@ public class BM25 implements ScoringInterface{
         return upper_bound;
     }
 
+    /**
+     * Computes and returns the BM25 score based on the given term frequency (tf),
+     * document frequency (df), and document length (doc_len) using the BM25 formula.
+     *
+     * @param parameters An array of integers representing term frequency (tf),
+     *                   document frequency (df), and document length (doc_len).
+     * @return The computed BM25 score.
+     */
     @Override
     public float computeScore(int... parameters) {
 
@@ -68,6 +84,12 @@ public class BM25 implements ScoringInterface{
         return tf / denominator * log;
     }
 
+    /**
+     * Gets the document length for a specific document.
+     *
+     * @param i The index of the document.
+     * @return The document length for the specified document.
+     */
     public int getDl(int i) {
         return this.dl[i];
     }
