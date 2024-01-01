@@ -27,11 +27,6 @@ cd ..
 # Run 
 
 ## Build Index
-```
-java -cp target/SearchEngine_Project-1.0-SNAPSHOT.jar org.offline_phase.MainClass -c -p
-```
-
-oppure 
 
 ```
  mvn -e exec:java -Dexec.mainClass="org.offline_phase.MainClass"  -Dexec.args="-p -c"
@@ -44,7 +39,7 @@ oppure
 ## Command Line Interface
 
 ```
-java -cp target/SearchEngine_Project-1.0-SNAPSHOT.jar org.online_phase.MainClass -c -p -s=bm25 -k=20
+ mvn -e exec:java -Dexec.mainClass="org.online_phase.MainClass"  -Dexec.args="-p -c -k=20 -s=bm25 -mode=c"
 ```
 
 ```
