@@ -39,7 +39,19 @@ cd ..
 ## Command Line Interface
 
 ```
- mvn -e exec:java -Dexec.mainClass="org.online_phase.MainClass"  -Dexec.args="-p -c -k=20 -s=bm25 -mode=c"
+ mvn -e exec:java -Dexec.mainClass="org.online_phase.MainClass"  -Dexec.args="-p -c -k=20 -s=bm25
+```
+
+```
+[-p] apply stemming and stopword removal 
+[-c] index compression
+[-k=20] retrieve the top 20 document
+[-s=bm25] use BM25 scoring function (otherwise TFIDF will be applied)
+```
+## Evaluation using TrecEval
+
+```
+ mvn -e exec:java -Dexec.mainClass="org.evaluation.MainClass"  -Dexec.args="-p -c -k=20 -s=bm25 -mode=d
 ```
 
 ```
@@ -49,5 +61,3 @@ cd ..
 [-s=bm25] use BM25 scoring function (otherwise TFIDF will be applied)
 [-mode=c] use DAAT in conjunctive mode
 [-mode=d] use DAAT in disjunctive mode (if no mode is specified, MaxScore si used
-```
-## Evaluation using TrecEval
