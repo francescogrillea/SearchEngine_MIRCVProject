@@ -8,6 +8,22 @@ sudo apt install maven
 mvn package
 ```
 
+## Setup Environment
+```
+mkdir data/intermediate_postings/
+mkdir data/intermediate_postings/index/
+mkdir data/intermediate_postings/lexicon/
+mkdir data/intermediate_postings/doc_index/
+```
+
+## Cleanup Environment
+```
+cd data
+chmod +x cleanup.sh
+./cleanup.sh
+cd ..
+```
+
 # Run 
 
 ## Build Index
