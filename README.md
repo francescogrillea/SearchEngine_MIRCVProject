@@ -5,7 +5,7 @@ sudo apt install maven
 
 # Install SearchEngine
 ```
-mvn package
+mvn compile
 ```
 
 ## Setup Environment
