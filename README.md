@@ -31,6 +31,12 @@ cd ..
 java -cp target/SearchEngine_Project-1.0-SNAPSHOT.jar org.offline_phase.MainClass -c -p
 ```
 
+oppure 
+
+```
+ mvn -e exec:java -Dexec.mainClass="org.offline_phase.MainClass"  -Dexec.args="-p -c"
+```
+
 ```
 [-p] apply stemming and stopword removal 
 [-c] index compression
